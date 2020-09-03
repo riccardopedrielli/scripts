@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -Ee
+trap exit ERR
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+# Arguments
+OPTION="${1}"
+
+# Settings
+PACKAGES=(
+    "@vue/cli"
+    "diff-so-fancy"
+    "dockerfilelint"
+    "eslint"
+    "list-repos"
+    "markdownlint-cli"
+    "nodemon"
+    "npm"
+    "npm-check-updates"
+    "semver"
+    "webpack"
+    "webpack-cli"
+)
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo "$(tput setaf 1)Error: \"${1}\" is required but not installed.$(tput sgr0)"
+        exit 1
+    fi
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+colorecho()
+{
+    echo
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+npm_install()
+{
+    for PACKAGE in ${PACKAGES[*]}; do
+        colorecho "Installing ${PACKAGE}"
+        npm install --global "${PACKAGE}"
+    done
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+npm_uninstall()
+{
+    UN_PACKAGES="$(npm list --global --parseable --depth 0 | tail -n +2)"
+
+    for PACKAGE in ${UN_PACKAGES}; do
+        PACKAGE=${PACKAGE#*node_modules/}
+        if [ "${PACKAGE}" != "npm" ]; then
+            colorecho "Uninstalling ${PACKAGE}"
+            npm uninstall --global "${PACKAGE}"
+        fi
+    done
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+check_bin npm
+
+case ${OPTION} in
+    '')
+        npm_install
+        ;;
+    -u)
+        npm_uninstall
+        ;;
+    *)
+        echo "Unrecognized option \"${OPTION}\", use \"-u\" to uninstall the packages"
+        ;;
+esac
+
+#-----------------------------------------------------------------------------------------------------------------------

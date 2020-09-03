@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+set -e
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+# Arguments
+SCRIPT=$(basename "${0}")
+ACTION="${1}"
+SIZE="${2:-1}"
+
+# Settings
+DISK_PATH="/media/ramdisk"
+DISK_USER="rpedrielli"
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <action> [size]"
+    echo
+    echo "Actions:"
+    echo "    create    Creates the ramdisk"
+    echo "    delete    Deletes the ramdisk"
+    echo
+    echo "    size      The size in GB of the ramdisk (default: 1)"
+    echo
+
+    exit 1
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+ramdisk_create()
+{
+    if [ -e ${DISK_PATH} ]; then
+        echo "Ramdisk is already present"
+        exit 1
+    fi
+
+    mkdir ${DISK_PATH}
+
+    mount -t tmpfs -o "x-gvfs-show,x-gvfs-name=RamDisk,size=${SIZE}g" tmpfs ${DISK_PATH}
+
+    chown -R ${DISK_USER}:${DISK_USER} ${DISK_PATH}
+
+    echo "Ramdisk created"
+    echo "    Path: ${DISK_PATH}"
+    echo "    Size: ${SIZE}GB"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+ramdisk_delete()
+{
+    if [ ! -e ${DISK_PATH} ]; then
+        echo "Ramdisk not found"
+        exit 1
+    fi
+
+    umount ${DISK_PATH} || true
+
+    rmdir ${DISK_PATH}
+
+    echo "Ramdisk deleted"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+main()
+{
+    case ${ACTION} in
+
+        create)
+            ramdisk_create
+            ;;
+
+        delete)
+            ramdisk_delete
+            ;;
+
+        *)
+            print_usage
+            ;;
+
+    esac
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+if [ ${EUID} != 0 ]; then
+    exec sudo "$0" "$@"
+else
+    main
+fi
+
+#-----------------------------------------------------------------------------------------------------------------------

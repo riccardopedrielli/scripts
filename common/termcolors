@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+echo "$(tput sgr0)      TEXT       $(tput bold)LIGHT_TEXT"
+echo "$(tput sgr0)$(tput setaf 0) 0    BLACK      $(tput bold)LIGHT_BLACK"
+echo "$(tput sgr0)$(tput setaf 1) 1    RED        $(tput bold)LIGHT_RED"
+echo "$(tput sgr0)$(tput setaf 2) 2    GREEN      $(tput bold)LIGHT_GREEN"
+echo "$(tput sgr0)$(tput setaf 3) 3    YELLOW     $(tput bold)LIGHT_YELLOW"
+echo "$(tput sgr0)$(tput setaf 4) 4    BLUE       $(tput bold)LIGHT_BLUE"
+echo "$(tput sgr0)$(tput setaf 5) 5    MAGENTA    $(tput bold)LIGHT_MAGENTA"
+echo "$(tput sgr0)$(tput setaf 6) 6    CYAN       $(tput bold)LIGHT_CYAN"
+echo "$(tput sgr0)$(tput setaf 7) 7    WHITE      $(tput bold)LIGHT_WHITE"

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+IGNORE_FILES="
+/usr/share/applications/code-url-handler.desktop
+/usr/share/applications/code.desktop
+"
+
+CHANGED_FILES="$(sudo debsums -c)"
+
+for IGNORE_FILE in ${IGNORE_FILES}; do
+    CHANGED_FILES="${CHANGED_FILES/${IGNORE_FILE}/}"
+done
+
+CHANGED_FILES="${CHANGED_FILES//$'\n'/' '}"
+CHANGED_FILES="$(echo "${CHANGED_FILES}" | xargs)"
+
+if [ -n "${CHANGED_FILES}" ]; then
+    # shellcheck disable=SC2086
+    PKG_LIST="$(dpkg --search ${CHANGED_FILES} | cut -d : -f 1 | sort -u)"
+
+    if [ -n "${PKG_LIST}" ]; then
+        echo "Packages to repair:"
+        echo -e "${PKG_LIST}"
+
+        if [ "${1}" != "-l" ]; then
+            # shellcheck disable=SC2086
+            sudo apt install --reinstall ${PKG_LIST}
+        fi
+    fi
+else
+    echo "No packages to be repaired"
+fi

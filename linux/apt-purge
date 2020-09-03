@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+
+PURGE_LIST="$(dpkg -l | grep '^rc' | awk '{print $2}')"
+
+if [ -n "${PURGE_LIST}" ]; then
+    echo "Packages to purge:"
+    echo -e "${PURGE_LIST}"
+
+    if [ "${1}" != "-l" ]; then
+        sudo dpkg --purge "${PURGE_LIST}"
+    fi
+else
+    echo "No packages with residual config"
+fi

@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+# Bash setup
+
+set -o errexit
+set -o errtrace
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
+
+# Arguments
+
+readonly SCRIPT=$(basename "${0}")
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly COMMAND="${1}"
+
+# Settings
+
+BRIDGE_HOST="rpedrielli-ub18.expertsystem.local"
+DEST_HOST="vm-gitlab"
+RPCONNECT_PATH="/home/rpedrielli/.rpc/rpconnect.sh"
+PF_SETUP_PATH="${HOME}/GoogleDrive/Expert System/Tunnel/pf.conf"
+
+# Utilities
+
+function echo_info()
+{
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+function echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+function print_error()
+{
+    local -r SOURCE_PATH="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
+    local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    RELATIVE_PATH="${RELATIVE_PATH#/}"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
+
+function check_bash_version()
+{
+    local -r MINIMUM_VERSION="4"
+
+    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
+        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
+        exit 1
+    fi
+}
+
+function check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+function get_processes()
+{
+    AUTOSSH=$(ssh ${BRIDGE_HOST} ssh ${DEST_HOST} ps aux | grep vortex@sirio.riccardopedrielli.com | cat)
+    RPCONNECT=$(ssh ${BRIDGE_HOST} ssh ${DEST_HOST} ps aux | grep -s ${RPCONNECT_PATH} | cat)
+
+    if [ -z "${AUTOSSH}" ] && [ -z "${RPCONNECT}" ]; then
+        PROCESSES=""
+    elif [ -z "${AUTOSSH}" ]; then
+        PROCESSES="${RPCONNECT}"
+    elif [ -z "${RPCONNECT}" ]; then
+        PROCESSES="${AUTOSSH}"
+    else
+        PROCESSES="${AUTOSSH}"$'\n'"${RPCONNECT}"
+    fi
+
+    echo "${PROCESSES}"
+}
+
+function get_proc_commands()
+{
+    echo "${1}" | awk '{out=""; for(i=11;i<=NF;i++){out=out$i" "}; print out}'
+}
+
+# Commands
+
+function print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <command>"
+    echo
+    echo "Commands:"
+    echo "    setup         Setup the local network interface and port forwarding"
+    echo "    connect       Connect ${DEST_HOST} to this machine"
+    echo "    disconnect    Disconnect ${DEST_HOST} from this machine"
+    echo "    reconnect     Execute disconnect and connect in sequence"
+    echo "    check         Check that the processes managing the connection are running"
+    echo
+
+    exit 1
+}
+
+function exsy_setup()
+{
+    sudo ifconfig lo0 10.0.0.1 alias
+    sudo pfctl -ef "${PF_SETUP_PATH}" || true
+}
+
+function exsy_connect()
+{
+    echo_info "Wait 5 seconds and terminate this command with Ctrl-C, the connection will stay active"
+    ssh ${BRIDGE_HOST} ssh ${DEST_HOST} ${RPCONNECT_PATH}
+}
+
+function exsy_disconnect()
+{
+    while true; do
+        PROCESSES=$(get_processes)
+
+        if [ -z "${PROCESSES}" ]; then
+            echo_info "Disconnected"
+            return
+        fi
+
+        echo_info "Connection found, disconnecting..."
+
+        PIDS=$(echo "${PROCESSES}" | awk '{print $2}')
+
+        for PID in ${PIDS}; do
+            ssh ${BRIDGE_HOST} ssh ${DEST_HOST} kill -9 "${PID}" 2> /dev/null || true
+        done
+    done
+}
+
+function exsy_reconnect()
+{
+    exsy_disconnect
+    exsy_connect
+}
+
+function exsy_check()
+{
+    PROCESSES=$(get_processes)
+
+    if [ -z "${PROCESSES}" ]; then
+        echo_info "Not connected"
+    else
+        get_proc_commands "${PROCESSES}"
+        echo_info "Connected"
+    fi
+}
+
+# Main
+
+function main()
+{
+    check_bash_version
+
+    check_bin pfctl
+    check_bin ssh
+    check_bin awk
+
+    case ${COMMAND} in
+        setup)
+            exsy_setup
+            ;;
+        connect)
+            exsy_connect
+            ;;
+        disconnect)
+            exsy_disconnect
+            ;;
+        reconnect)
+            exsy_reconnect
+            ;;
+        check)
+            exsy_check
+            ;;
+        *)
+            print_usage
+            ;;
+    esac
+}
+
+main

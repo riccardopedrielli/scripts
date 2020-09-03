@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+DATES="$(sudo tmutil listlocalsnapshotdates | tail -n +2)"
+
+echo "Local snapshots to be deleted: "
+echo "${DATES}"
+
+while read -r DATE; do
+    sudo tmutil deletelocalsnapshots "${DATE}"
+done <<< "${DATES}"

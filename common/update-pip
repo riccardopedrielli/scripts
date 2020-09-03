@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+# Bash setup
+set -o errexit
+set -o errtrace
+set -o pipefail
+trap 'print_error ${?} ${LINENO}' ERR
+
+# Functions
+function echo_info()
+{
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+function echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+function print_error()
+{
+    local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
+    local -r STATUS="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r CONTEXT_LINES="3"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${STATUS} at ${SCRIPT}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
+
+function check_bash_version()
+{
+    local -r MINIMUM_VERSION="4"
+
+    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
+        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
+        exit 1
+    fi
+}
+
+function check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+function main()
+{
+    check_bash_version
+
+    check_bin python3
+
+    if [ "$(uname -s)" != "Darwin" ]; then
+        USER_OPTION="--user"
+    fi
+
+    local PACKAGES
+    PACKAGES="$(python3 -m pip list --outdated ${USER_OPTION} --format=freeze)"
+
+    if [ -n "${PACKAGES}" ]; then
+        PACKAGES="$(echo "${PACKAGES}" | grep -v '^\-e' | cut -d = -f 1)"
+
+        for PACKAGE in ${PACKAGES}; do
+            echo_info "Updating ${PACKAGE}"
+            python3 -m pip install --upgrade ${USER_OPTION} "${PACKAGE}"
+        done
+
+        echo_info "Done"
+    else
+        echo_info "All packages are already at the latest version"
+    fi
+}
+
+main

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -e
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+# Arguments
+SCRIPT=$(basename "${0}")
+ACTION="${1}"
+SIZE="${2:-1}"
+
+# Settings
+DISK_PATH="/Volumes"
+DISK_NAME="RamDisk"
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <action> [size]"
+    echo
+    echo "Actions:"
+    echo "    create    Creates the ramdisk"
+    echo "    delete    Deletes the ramdisk"
+    echo
+    echo "    size      The size in GB of the ramdisk (default: 1GB)"
+    echo
+
+    exit 1
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+ramdisk_create()
+{
+    if [ -e "${DISK_PATH}/${DISK_NAME}" ]; then
+        echo "Ramdisk is already present"
+        exit 1
+    fi
+
+    SECTORS=$((SIZE * 1024 * 2048))
+
+    DISK=$(hdiutil attach -nomount ram://${SECTORS})
+
+    #shellcheck disable=2086
+    diskutil erasevolume HFS+ "${DISK_NAME}" ${DISK} &> /dev/null
+
+    echo "Ramdisk created"
+    echo "    Path: ${DISK_PATH}/${DISK_NAME}"
+    echo "    Size: ${SIZE}GB"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+ramdisk_delete()
+{
+    if [ ! -e "${DISK_PATH}/${DISK_NAME}" ]; then
+        echo "Ramdisk not found"
+        exit 1
+    fi
+
+    diskutil eject ${DISK_PATH}/${DISK_NAME} &> /dev/null
+
+     echo "Ramdisk deleted"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+case ${ACTION} in
+
+    create)
+        ramdisk_create
+        ;;
+
+    delete)
+        ramdisk_delete
+        ;;
+
+    *)
+        print_usage
+        ;;
+
+esac
+
+#-----------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+find "${HOME}" -iname "*${1}*" -print

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+git init -b main .
+git commit --allow-empty --message 'Repo init'

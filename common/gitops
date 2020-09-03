@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+# Arguments
+SCRIPT=$(basename "${0}")
+COMMAND="${1}"
+
+# Settings
+BASE_DIR="$(pwd)"
+COLOR_REPO="$(tput setaf 2)"
+COLOR_BRANCH="$(tput setaf 1)"
+COLOR_INDENT="$(tput setaf 4)"
+COLOR_OK="$(tput setaf 3)"
+COLOR_ERROR="$(tput setaf 5)"
+COLOR_RESET="$(tput sgr0)"
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <command> [options]"
+    echo
+    echo "Commands:"
+    echo "    status    Show the repository status"
+    echo "    fetch     Fetch from remote and then show the repository status"
+    echo "    pull      If the repository is clean, pull from remote, otherwise do a fetch and then show the status"
+    echo
+    echo "Options:"
+    echo "    -n        Show only the repositories that are not in a clean status"
+    echo "    -d dir    Recursively search into the specificed directory (default: current directory)"
+    echo
+
+    exit 1
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+check_clean()
+{
+    CLEAN=$(git status | grep 'working tree clean' -c)
+    FIXUP=$(git status | grep 'fixup' -c)
+
+    if [ "${FIXUP}" != "0" ]; then
+        CLEAN=0;
+    fi
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+repo_status()
+{
+    if [ "${1}" = "nockeck" ]; then
+        check_clean
+    fi
+
+    if [[ "${CLEAN}" = "0" || ! "${NOT_CLEAN_ONLY}" ]]; then
+        echo
+        echo -n "${COLOR_INDENT}>>>${COLOR_RESET} "
+        echo -n "${COLOR_REPO}${DIRECTORY:$((${#BASE_DIR} + 1))}${COLOR_RESET} "
+        echo    "${COLOR_BRANCH}($(git status | head -n1 | awk '{print $3}'))${COLOR_RESET}"
+        echo
+    fi
+
+    if [ "${CLEAN}" = "0" ]; then
+        if [ "${REMOTE}" = "0" ]; then
+            echo "$(tput ht)${COLOR_ERROR}Remote 'origin' is not set${COLOR_RESET}"
+        else
+            git status
+        fi
+        echo
+    elif [ ! "${NOT_CLEAN_ONLY}" ]; then
+        echo "$(tput ht)${COLOR_OK}clean${COLOR_RESET}"
+        echo
+    fi
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+repo_fetch()
+{
+    git fetch --all -tpq
+    repo_status
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+repo_pull()
+{
+    check_clean
+
+    git fetch --all -tpq
+
+    if [ "${CLEAN}" = "1" ]; then
+	if git remote get-url origin > /dev/null 2>&1; then
+            REMOTE=1
+            git pull --all --ff -q
+        else
+            CLEAN=0
+            REMOTE=0
+        fi
+    fi
+
+    repo_status nocheck
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+do_repo_action()
+{
+    echo "${DIRECTORY}"
+
+    DIRECTORIES=$(find "${BASE_DIR}" -type d -name '.git' | sed 's|/.git||' | sort -f)
+
+    for DIRECTORY in ${DIRECTORIES}; do
+        cd "${DIRECTORY}" || exit 1
+        ${CALL}
+    done
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+case ${COMMAND} in
+
+    status)
+        CALL='repo_status'
+        ;;
+
+    fetch)
+        CALL='repo_fetch'
+        ;;
+
+    pull)
+        CALL='repo_pull'
+        ;;
+    *)
+        print_usage
+        ;;
+
+esac
+
+shift
+
+while getopts "nd:" OPTION; do
+
+    case ${OPTION} in
+
+        n)
+            NOT_CLEAN_ONLY=1
+            ;;
+
+        d)
+            BASE_DIR=$(realpath "${OPTARG}")
+            ;;
+
+        *)
+            print_usage
+            ;;
+
+    esac
+
+done
+
+do_repo_action
+
+#-----------------------------------------------------------------------------------------------------------------------
