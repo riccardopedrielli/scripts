@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-softwareupdate --all --install --force
