@@ -1,11 +1,5 @@
 # scripts
 
-My utility scripts.
+Utility scripts for my Linux workstation
 
-Directories:
-
-- `common`: scripts that work on both systems
-- `linux`: Linux specific scripts
-- `mac`: macOS specific scripts
-
-Add to `$PATH` the `common` and the system-specific directories.
+Add this directory to `$PATH`
