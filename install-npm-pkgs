@@ -10,18 +10,13 @@ OPTION="${1}"
 
 # Settings
 PACKAGES=(
-    "@vue/cli"
     "diff-so-fancy"
     "dockerfilelint"
     "eslint"
     "list-repos"
     "markdownlint-cli"
-    "nodemon"
     "npm"
-    "npm-check-updates"
     "semver"
-    "webpack"
-    "webpack-cli"
 )
 
 #-----------------------------------------------------------------------------------------------------------------------
