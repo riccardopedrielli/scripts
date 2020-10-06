@@ -12,7 +12,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
-readonly BASH_COMPLETIONS="eksctl helm kubectl minikube npm skaffold"
+readonly BASH_COMPLETIONS="eksctl"
 
 # Functions
 function echo_info()
@@ -136,22 +136,11 @@ function print_version()
 function print_report()
 {
     {
-        print_version "aws-iam-authenticator" "${AWSIAM_VERSION_OLD}"         "${AWSIAM_VERSION_NEW}"
         print_version "ctop"                  "${CTOP_VERSION_OLD}"           "${CTOP_VERSION_NEW}"
-        print_version "docker-compose"        "${DOCKER_COMPOSE_VERSION_OLD}" "${DOCKER_COMPOSE_VERSION_NEW}"
         print_version "eksctl"                "${EKSCTL_VERSION_OLD}"         "${EKSCTL_VERSION_NEW}"
-        print_version "helm"                  "${HELM_VERSION_OLD}"           "${HELM_VERSION_NEW}"
-        print_version "hugo"                  "${HUGO_VERSION_OLD}"           "${HUGO_VERSION_NEW}"
-        print_version "istioctl"              "${ISTIOCTL_VERSION_OLD}"       "${ISTIOCTL_VERSION_NEW}"
         print_version "jfrog"                 "${JFROG_VERSION_OLD}"          "${JFROG_VERSION_NEW}"
-        print_version "jq"                    "${JQ_VERSION_OLD}"             "${JQ_VERSION_NEW}"
-        print_version "kubectl"               "${KUBECTL_VERSION_OLD}"        "${KUBECTL_VERSION_NEW}"
-        print_version "minikube"              "${MINIKUBE_VERSION_OLD}"       "${MINIKUBE_VERSION_NEW}"
-        print_version "packer"                "${PACKER_VERSION_OLD}"         "${PACKER_VERSION_NEW}"
-        print_version "skaffold"              "${SKAFFOLD_VERSION_OLD}"       "${SKAFFOLD_VERSION_NEW}"
         print_version "terraform"             "${TERRAFORM_VERSION_OLD}"      "${TERRAFORM_VERSION_NEW}"
         print_version "vagrant"               "${VAGRANT_VERSION_OLD}"        "${VAGRANT_VERSION_NEW}"
-        print_version "yq"                    "${YQ_VERSION_OLD}"             "${YQ_VERSION_NEW}"
     } | column -t -s ' '
     echo
 }
@@ -172,22 +161,6 @@ function main()
     echo
     echo_info "Installing binaries"
 
-    # Install jq
-    echo "Installing jq"
-    readonly JQ_VERSION_OLD="$(jq --version 2> /dev/null | cut -d '-' -f 2)"
-    local -r JQ_VERSION_LATEST="$(curl -s "https://github.com/stedolan/jq/releases/latest" | sed -E 's|.*releases/tag/(.*)".*|\1|')"
-    install_bin "https://github.com/stedolan/jq/releases/download/${JQ_VERSION_LATEST}/jq-linux64" \
-        "jq"
-    readonly JQ_VERSION_NEW="$(jq --version 2> /dev/null | cut -d '-' -f 2)"
-
-    # Install aws-iam-authenticator
-    echo "Installing aws-iam-authenticator"
-    readonly AWSIAM_VERSION_OLD="$(aws-iam-authenticator version 2> /dev/null | jq -r .Version)"
-    local -r AWSIAM_VERSION_LATEST="$(get_latest_github_version kubernetes-sigs/aws-iam-authenticator)"
-    install_bin "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v${AWSIAM_VERSION_LATEST}/aws-iam-authenticator_${AWSIAM_VERSION_LATEST}_linux_amd64" \
-        "aws-iam-authenticator"
-    readonly AWSIAM_VERSION_NEW="$(aws-iam-authenticator version 2> /dev/null | jq -r .Version)"
-
     # Install ctop
     echo "Installing ctop"
     readonly CTOP_VERSION_OLD="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
@@ -196,14 +169,6 @@ function main()
         "ctop"
     readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
 
-    # Install docker-compose
-    echo "Installing docker-compose"
-    readonly DOCKER_COMPOSE_VERSION_OLD="$(docker-compose version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/.$//')"
-    local -r DOCKER_COMPOSE_VERSION_LATEST="$(get_latest_github_version docker/compose)"
-    install_bin "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION_LATEST}/docker-compose-Linux-x86_64" \
-        "docker-compose"
-    readonly DOCKER_COMPOSE_VERSION_NEW="$(docker-compose version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/.$//')"
-
     # Install eksctl
     echo "Installing eksctl"
     readonly EKSCTL_VERSION_OLD="$(eksctl version 2> /dev/null | cut -d '"' -f 6)"
@@ -211,64 +176,12 @@ function main()
         "eksctl" "eksctl"
     readonly EKSCTL_VERSION_NEW="$(eksctl version 2> /dev/null | cut -d '"' -f 6)"
 
-    # Install helm
-    echo "Installing helm"
-    readonly HELM_VERSION_OLD="$(helm version 2> /dev/null | cut -d '"' -f 2 | sed 's/^.//')"
-    local -r HELM_VERSION_LATEST="$(get_latest_github_version helm/helm)"
-    install_targz "https://get.helm.sh/helm-v${HELM_VERSION_LATEST}-linux-amd64.tar.gz" \
-        "linux-amd64/helm" "helm"
-    readonly HELM_VERSION_NEW="$(helm version 2> /dev/null | cut -d '"' -f 2 | sed 's/^.//')"
-
-    # Install hugo
-    echo "Installing hugo"
-    readonly HUGO_VERSION_OLD="$(hugo version 2> /dev/null | cut -d ' ' -f 5 | cut -d '-' -f 1 | sed 's/^.//')"
-    local -r HUGO_VERSION_LATEST="$(get_latest_github_version gohugoio/hugo)"
-    install_targz "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION_LATEST}/hugo_${HUGO_VERSION_LATEST}_Linux-64bit.tar.gz" \
-        "hugo" "hugo"
-    readonly HUGO_VERSION_NEW="$(hugo version 2> /dev/null | cut -d ' ' -f 5 | cut -d '-' -f 1 | sed 's/^.//')"
-
-    # Install istioctl
-    echo "Installing istioctl"
-    readonly ISTIOCTL_VERSION_OLD="$(istioctl version --short=true --remote=false 2> /dev/null || true)"
-    local -r ISTIOCTL_VERSION_LATEST="$(get_latest_github_version istio/istio)"
-    install_targz "https://github.com/istio/istio/releases/download/${ISTIOCTL_VERSION_LATEST}/istioctl-${ISTIOCTL_VERSION_LATEST}-linux.tar.gz" \
-        "istioctl" "istioctl"
-    readonly ISTIOCTL_VERSION_NEW="$(istioctl version --short=true --remote=false 2> /dev/null || true)"
-
     # Install jfrog
     echo "Installing jfrog"
     readonly JFROG_VERSION_OLD="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
     install_bin "https://api.bintray.com/content/jfrog/jfrog-cli-go/\$latest/jfrog-cli-linux-amd64/jfrog?bt_package=jfrog-cli-linux-amd64" \
         "jfrog"
     readonly JFROG_VERSION_NEW="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
-
-    # Install kubectl
-    echo "Installing kubectl"
-    readonly KUBECTL_VERSION_OLD="$(kubectl version --client --short 2> /dev/null | cut -d ' ' -f 3 | sed 's/^.//')"
-    local -r KUBECTL_VERSION_LATEST="$(curl -sSL https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
-    install_bin "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION_LATEST}/bin/linux/amd64/kubectl" \
-        "kubectl"
-    readonly KUBECTL_VERSION_NEW="$(kubectl version --client --short 2> /dev/null | cut -d ' ' -f 3 | sed 's/^.//')"
-
-    # Install minikube
-    echo "Installing minikube"
-    readonly MINIKUBE_VERSION_OLD=$(minikube version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/^.//')
-    install_bin "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64" \
-        "minikube"
-    readonly MINIKUBE_VERSION_NEW=$(minikube version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/^.//')
-
-    # Install packer
-    echo "Installing packer"
-    readonly PACKER_VERSION_OLD="$(packer version 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//')"
-    install_hashicorp_app "packer"
-    readonly PACKER_VERSION_NEW="$(packer version 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//')"
-
-    # Install skaffold
-    echo "Installing skaffold"
-    readonly SKAFFOLD_VERSION_OLD="$(skaffold version 2> /dev/null | sed 's/^.//')"
-    install_bin "https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64" \
-        "skaffold"
-    readonly SKAFFOLD_VERSION_NEW="$(skaffold version 2> /dev/null | sed 's/^.//')"
 
     # Install terraform
     echo "Installing terraform"
@@ -281,14 +194,6 @@ function main()
     readonly VAGRANT_VERSION_OLD="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
     install_hashicorp_app "vagrant"
     readonly VAGRANT_VERSION_NEW="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
-
-    # Install yq
-    echo "Installing yq"
-    readonly YQ_VERSION_OLD="$(yq --version 2> /dev/null | cut -d ' ' -f 3)"
-    local -r YQ_VERSION_LATEST="$(get_latest_github_version mikefarah/yq)"
-    install_bin "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION_LATEST}/yq_linux_amd64" \
-        "yq"
-    readonly YQ_VERSION_NEW="$(yq --version 2> /dev/null | cut -d ' ' -f 3)"
 
     # Generate bash completions
     echo
@@ -315,13 +220,6 @@ function main()
 
     echo "Generating pip3 completion"
     pip3 completion --bash > "${BASH_COMPLETION_DIR}/pip3"
-
-    echo "Generating istioctl completion"
-    istioctl collateral --bash --outputDir "${BASH_COMPLETION_DIR}"
-
-    echo "Generating docker-compose completion"
-    curl -sSL "https://raw.githubusercontent.com/docker/compose/${DOCKER_COMPOSE_VERSION_LATEST}/contrib/completion/bash/docker-compose" \
-        -o "${BASH_COMPLETION_DIR}/docker-compose"
 
     # Report
     echo
