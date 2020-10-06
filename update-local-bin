@@ -153,6 +153,8 @@ function main()
     check_bin curl
     check_bin unzip
     check_bin tar
+    check_bin gzip
+    check_bin jq
 
     if [ ! -d "${BIN_DIR}" ]; then
         mkdir -p "${BIN_DIR}"
