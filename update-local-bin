@@ -11,8 +11,6 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
-readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
-readonly BASH_COMPLETIONS="eksctl"
 
 # Functions
 function echo_info()
@@ -196,32 +194,6 @@ function main()
     readonly VAGRANT_VERSION_OLD="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
     install_hashicorp_app "vagrant"
     readonly VAGRANT_VERSION_NEW="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
-
-    # Generate bash completions
-    echo
-    echo_info "Generating bash completions"
-
-    if [ ! -d "${BASH_COMPLETION_DIR}" ]; then
-        mkdir -p "${BASH_COMPLETION_DIR}"
-    fi
-
-    rm -f "${BASH_COMPLETION_DIR}"/*
-
-    for COMPLETION in ${BASH_COMPLETIONS}; do
-        if [ -e "$(command -v "${COMPLETION}")" ]; then
-            echo "Generating ${COMPLETION} completion"
-            ${COMPLETION} completion bash > "${BASH_COMPLETION_DIR}/${COMPLETION}"
-        else
-            echo "${COMPLETION} completion not found"
-        fi
-    done
-
-    echo "Generating jfrog completion"
-    export JFROG_CLI_HOME_DIR="${BASH_COMPLETION_DIR}"
-    jfrog completion bash > /dev/null
-
-    echo "Generating pip3 completion"
-    pip3 completion --bash > "${BASH_COMPLETION_DIR}/pip3"
 
     # Report
     echo
