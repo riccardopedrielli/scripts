@@ -134,11 +134,12 @@ function print_version()
 function print_report()
 {
     {
-        print_version "ctop"                  "${CTOP_VERSION_OLD}"           "${CTOP_VERSION_NEW}"
-        print_version "eksctl"                "${EKSCTL_VERSION_OLD}"         "${EKSCTL_VERSION_NEW}"
-        print_version "jfrog"                 "${JFROG_VERSION_OLD}"          "${JFROG_VERSION_NEW}"
-        print_version "terraform"             "${TERRAFORM_VERSION_OLD}"      "${TERRAFORM_VERSION_NEW}"
-        print_version "vagrant"               "${VAGRANT_VERSION_OLD}"        "${VAGRANT_VERSION_NEW}"
+        print_version "ctop"      "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
+        print_version "eksctl"    "${EKSCTL_VERSION_OLD}"    "${EKSCTL_VERSION_NEW}"
+        print_version "jfrog"     "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
+        print_version "k6"        "${K6_VERSION_OLD}"        "${K6_VERSION_NEW}"
+        print_version "terraform" "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
+        print_version "vagrant"   "${VAGRANT_VERSION_OLD}"   "${VAGRANT_VERSION_NEW}"
     } | column -t -s ' '
     echo
 }
@@ -182,6 +183,14 @@ function main()
     install_bin "https://api.bintray.com/content/jfrog/jfrog-cli-go/\$latest/jfrog-cli-linux-amd64/jfrog?bt_package=jfrog-cli-linux-amd64" \
         "jfrog"
     readonly JFROG_VERSION_NEW="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
+
+    # Install k6
+    echo "Installing k6"
+    readonly K6_VERSION_OLD="$(k6 version 2> /dev/null | cut -d ' ' -f 2 | sed 's/v//')"
+    local -r K6_VERSION_LATEST="$(get_latest_github_version loadimpact/k6)"
+    install_targz "https://github.com/loadimpact/k6/releases/download/v${K6_VERSION_LATEST}/k6-v${K6_VERSION_LATEST}-linux64.tar.gz" \
+        "k6-v${K6_VERSION_LATEST}-linux64/k6" "k6"
+    readonly K6_VERSION_NEW="$(k6 version 2> /dev/null | cut -d ' ' -f 2 | sed 's/v//')"
 
     # Install terraform
     echo "Installing terraform"
