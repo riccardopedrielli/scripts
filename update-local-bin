@@ -134,7 +134,6 @@ function print_report()
 {
     {
         print_version "ctop"      "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
-        print_version "eksctl"    "${EKSCTL_VERSION_OLD}"    "${EKSCTL_VERSION_NEW}"
         print_version "jfrog"     "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
         print_version "k6"        "${K6_VERSION_OLD}"        "${K6_VERSION_NEW}"
         print_version "terraform" "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
@@ -168,13 +167,6 @@ function main()
     install_bin "https://github.com/bcicen/ctop/releases/download/v${CTOP_VERSION_LATEST}/ctop-${CTOP_VERSION_LATEST}-linux-amd64" \
         "ctop"
     readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
-
-    # Install eksctl
-    echo "Installing eksctl"
-    readonly EKSCTL_VERSION_OLD="$(eksctl version 2> /dev/null | cut -d '"' -f 6)"
-    install_targz "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_Linux_amd64.tar.gz" \
-        "eksctl" "eksctl"
-    readonly EKSCTL_VERSION_NEW="$(eksctl version 2> /dev/null | cut -d '"' -f 6)"
 
     # Install jfrog
     echo "Installing jfrog"
