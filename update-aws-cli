@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# Bash setup
+set -o errtrace
+trap 'print_error ${?} ${LINENO}' ERR
+trap 'print_version' EXIT
+
+# Arguments
+readonly SCRIPT=$(basename "${0}")
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+
+# Settings
+readonly TEMP_DIR="/tmp"
+readonly INSTALL_DIR="/usr/local"
+readonly APP_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+readonly APP="aws"
+
+# Functions
+function echo_info()
+{
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+function echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+function print_error()
+{
+    local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
+    local -r STATUS="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r CONTEXT_LINES="3"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${STATUS} at ${SCRIPT}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo
+}
+
+function check_bash_version()
+{
+    local -r MINIMUM_VERSION="4"
+
+    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
+        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
+        exit 1
+    fi
+}
+
+function check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+function print_version()
+{
+    local -r BIN="aws"
+
+    if [ -z "${AWS_VERSION_OLD}" ]; then
+        AWS_VERSION_OLD="None"
+    fi
+
+    if [ -z "${AWS_VERSION_NEW}" ]; then
+        AWS_VERSION_NEW="Error getting the new version"
+    fi
+
+    if [ "${AWS_VERSION_OLD}" = "${AWS_VERSION_NEW}" ]; then
+        echo "${BIN}: ${AWS_VERSION_NEW}"
+    else
+        echo "$(tput setaf 3)${BIN}: ${AWS_VERSION_OLD} -> ${AWS_VERSION_NEW}$(tput sgr0)"
+    fi
+}
+
+function main()
+{
+    check_bash_version
+
+    check_bin sed
+    check_bin curl
+    check_bin unzip
+
+    echo
+    echo_info "Updating aws cli"
+
+    readonly AWS_VERSION_OLD="$(aws --version | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
+
+    curl -sSL "${APP_URL}" -o "${TEMP_DIR}/${APP}.zip"
+
+    unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}"
+    rm -f "${TEMP_DIR}/${APP}.zip"
+
+    sudo "${TEMP_DIR}/${APP}/install" --install-dir "${INSTALL_DIR}/aws-cli" --bin-dir "${INSTALL_DIR}/bin" --update
+
+    rm -rf "${TEMP_DIR:?}/${APP}"
+
+    readonly AWS_VERSION_NEW="$(aws --version | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
+
+    echo_info "Done"
+    echo
+}
+
+main
