@@ -10,7 +10,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 # Settings
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
-readonly BASH_COMPLETIONS="eksctl helm kubectl"
+readonly BASH_COMPLETIONS="helm kubectl"
 
 # Functions
 function echo_info()
