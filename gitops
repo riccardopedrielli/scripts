@@ -26,6 +26,7 @@ print_usage()
     echo "    status    Show the repository status"
     echo "    fetch     Fetch from remote and then show the repository status"
     echo "    pull      If the repository is clean, pull from remote, otherwise do a fetch and then show the status"
+    echo "    develop   Checks out the \"develop\" branch if it exists"
     echo
     echo "Options:"
     echo "    -n        Show only the repositories that are not in a clean status"
@@ -107,6 +108,14 @@ repo_pull()
 
 #-----------------------------------------------------------------------------------------------------------------------
 
+repo_develop()
+{
+    git switch develop
+    repo_status nocheck
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+
 do_repo_action()
 {
     echo "${DIRECTORY}"
@@ -134,6 +143,11 @@ case ${COMMAND} in
     pull)
         CALL='repo_pull'
         ;;
+
+    develop)
+        CALL='repo_develop'
+        ;;
+
     *)
         print_usage
         ;;
