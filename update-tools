@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+# Bash setup
+set -o errtrace
+trap 'print_error ${?} ${LINENO}' ERR
+trap 'print_report' EXIT
+
+# Arguments
+readonly SCRIPT=$(basename "${0}")
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+
+# Settings
+readonly TOOLS_DIR="${HOME}/dev/tools"
+readonly TEMP_DIR="/tmp"
+
+# Functions
+function echo_info()
+{
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+function echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+function print_error()
+{
+    local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
+    local -r STATUS="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r CONTEXT_LINES="3"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${STATUS} at ${SCRIPT}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    echo
+}
+
+function check_bash_version()
+{
+    local -r MINIMUM_VERSION="4"
+
+    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
+        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
+        exit 1
+    fi
+}
+
+function check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+function install_targz()
+{
+    local -r URL="${1}"
+    local -r TOOL_TAR_PATH="${2}"
+    local -r TOOL_NAME="${3}"
+
+    curl -sSL "${URL}" -o "${TEMP_DIR}/${TOOL_NAME}.tar.gz"
+    rm -rf "${TEMP_DIR:?}/${TOOL_NAME}"
+    mkdir -p "${TEMP_DIR}/${TOOL_NAME}"
+    tar xzf "${TEMP_DIR}/${TOOL_NAME}.tar.gz" -C "${TEMP_DIR}/${TOOL_NAME}"
+    rm -rf "${TOOLS_DIR:?}/${TOOL_NAME}"
+    mv -f "${TEMP_DIR}/${TOOL_NAME}/${TOOL_TAR_PATH}" "${TOOLS_DIR}/${TOOL_NAME}"
+    chmod +x "${TOOLS_DIR}/${TOOL_NAME}"
+    rm -rf "${TEMP_DIR:?}/${TOOL_NAME}"
+    rm -f "${TEMP_DIR}/${TOOL_NAME}.tar.gz"
+}
+
+function print_version()
+{
+    local -r BIN=${1}
+    local OLD_VERSION=${2}
+    local NEW_VERSION=${3}
+
+    if [ -z "${OLD_VERSION}" ]; then
+        OLD_VERSION="None"
+    fi
+
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="Error getting the new version"
+    fi
+
+    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+        echo "${BIN}: ${NEW_VERSION}"
+    else
+        echo "$(tput setaf 3)${BIN}: ${OLD_VERSION} -> ${NEW_VERSION}$(tput sgr0)"
+    fi
+}
+
+function print_report()
+{
+    {
+        print_version "go" "${GO_VERSION_OLD}" "${GO_VERSION_NEW}"
+    } | column -t -s ' '
+    echo
+}
+
+function main()
+{
+    check_bash_version
+
+    check_bin curl
+    check_bin tar
+
+    if [ ! -d "${TOOLS_DIR}" ]; then
+        mkdir -p "${TOOLS_DIR}"
+    fi
+
+    echo
+    echo_info "Installing tools"
+
+    # Install go
+    echo "Installing go"
+    readonly GO_VERSION_OLD="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
+    local -r GO_VERSION_LATEST="$(curl -sSL "https://golang.org/VERSION?m=text")"
+    install_targz "https://dl.google.com/go/${GO_VERSION_LATEST}.linux-amd64.tar.gz" "go" "go"
+    readonly GO_VERSION_NEW="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
+
+    # Report
+    echo
+    echo_info "Update completed"
+}
+
+main
