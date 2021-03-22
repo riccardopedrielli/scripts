@@ -90,18 +90,20 @@ function main()
     echo
     echo_info "Updating aws cli"
 
-    readonly AWS_VERSION_OLD="$(aws --version | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
+    AWS_VERSION_OLD="$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
 
     curl -sSL "${APP_URL}" -o "${TEMP_DIR}/${APP}.zip"
 
     unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}"
     rm -f "${TEMP_DIR}/${APP}.zip"
 
-    sudo "${TEMP_DIR}/${APP}/install" --install-dir "${INSTALL_DIR}/aws-cli" --bin-dir "${INSTALL_DIR}/bin" --update
+    sudo "${TEMP_DIR}/${APP}/install" --install-dir "${INSTALL_DIR}/aws-cli" \
+                                      --bin-dir "${INSTALL_DIR}/bin" \
+                                      --update > /dev/null
 
     rm -rf "${TEMP_DIR:?}/${APP}"
 
-    readonly AWS_VERSION_NEW="$(aws --version | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
+    AWS_VERSION_NEW="$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
 
     echo_info "Done"
     echo
