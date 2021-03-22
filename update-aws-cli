@@ -105,6 +105,20 @@ function main()
 
     AWS_VERSION_NEW="$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|')"
 
+    echo_info "Purging old versions"
+
+    pushd "${INSTALL_DIR}/aws-cli/v2" > /dev/null || exit 1
+
+    readonly CURRENT_VERSION=$(basename "$(readlink -f current)")
+
+    for INSTALLED_VERSION in *; do
+        if [[ "${INSTALLED_VERSION}" != "current" && "${INSTALLED_VERSION}" != "${CURRENT_VERSION}" ]]; then
+            sudo rm -rf "${INSTALLED_VERSION}"
+        fi
+    done
+
+    popd > /dev/null || exit 1
+
     echo_info "Done"
     echo
 }
