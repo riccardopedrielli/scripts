@@ -89,6 +89,10 @@ function main()
     check_bin npm
     npm completion > "${BASH_COMPLETION_DIR}/npm"
 
+    echo "Generating yq completion"
+    check_bin yq
+    yq shell-completion bash > "${BASH_COMPLETION_DIR}/yq"
+
     echo_info "Operation completed"
     echo
 }
