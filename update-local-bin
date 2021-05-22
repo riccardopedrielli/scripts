@@ -134,10 +134,11 @@ print_version()
 print_report()
 {
     {
-        print_version "ctop"      "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
-        print_version "jfrog"     "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
-        print_version "terraform" "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
-        print_version "vagrant"   "${VAGRANT_VERSION_OLD}"   "${VAGRANT_VERSION_NEW}"
+        print_version "ctop"           "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
+        print_version "docker-compose" "${COMPOSE_VERSION_OLD}"   "${COMPOSE_VERSION_NEW}"
+        print_version "jfrog"          "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
+        print_version "terraform"      "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
+        print_version "vagrant"        "${VAGRANT_VERSION_OLD}"   "${VAGRANT_VERSION_NEW}"
     } | column -t -s ' '
     echo
 }
@@ -167,6 +168,14 @@ main()
     install_bin "https://github.com/bcicen/ctop/releases/download/v${CTOP_VERSION_LATEST}/ctop-${CTOP_VERSION_LATEST}-linux-amd64" \
         "ctop"
     readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
+
+    # Install docker-compose
+    echo "Installing docker-compose"
+    readonly COMPOSE_VERSION_OLD="$(docker-compose version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/.$//')"
+    local -r COMPOSE_VERSION_LATEST="$(get_latest_github_version docker/compose)"
+    install_bin "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION_LATEST}/docker-compose-Linux-x86_64" \
+        "docker-compose"
+    readonly COMPOSE_VERSION_NEW="$(docker-compose version 2> /dev/null | head -n 1 | cut -d ' ' -f 3 | sed 's/.$//')"
 
     # Install jfrog
     echo "Installing jfrog"
