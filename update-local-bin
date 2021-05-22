@@ -1,30 +1,31 @@
 #!/usr/bin/env bash
 
-# Bash setup
-set -o errtrace
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
 trap 'print_error ${?} ${LINENO}' ERR
 trap 'print_report' EXIT
 
 # Arguments
-readonly SCRIPT=$(basename "${0}")
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
 readonly TEMP_DIR="/tmp"
 
 # Functions
-function echo_info()
+echo_info()
 {
     echo "$(tput setaf 6)${*}$(tput sgr0)"
 }
 
-function echo_error()
+echo_error()
 {
     echo "$(tput setaf 1)${*}$(tput sgr0)"
 }
 
-function print_error()
+print_error()
 {
     local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
     local -r STATUS="${1}"
@@ -40,7 +41,7 @@ function print_error()
     echo
 }
 
-function check_bash_version()
+check_bash_version()
 {
     local -r MINIMUM_VERSION="4"
 
@@ -50,7 +51,7 @@ function check_bash_version()
     fi
 }
 
-function check_bin()
+check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
         echo_error "Error: \"${1}\" is required but not installed."
@@ -58,7 +59,7 @@ function check_bin()
     fi
 }
 
-function get_latest_github_version()
+get_latest_github_version()
 {
     local -r PROJECT="${1}"
     local -r RELEASES="$(curl -sSL "https://api.github.com/repos/${PROJECT}/releases" | jq -r .[].tag_name)"
@@ -67,7 +68,7 @@ function get_latest_github_version()
     semver -r "" ${RELEASES} | tail -n 1
 }
 
-function install_hashicorp_app()
+install_hashicorp_app()
 {
     local -r APP="${1}"
 
@@ -85,7 +86,7 @@ function install_hashicorp_app()
     chmod +x "${BIN_DIR}/${APP}"
 }
 
-function install_bin()
+install_bin()
 {
     local -r URL="${1}"
     local -r BIN_NAME="${2}"
@@ -94,7 +95,7 @@ function install_bin()
     chmod +x "${BIN_DIR}/${BIN_NAME}"
 }
 
-function install_targz()
+install_targz()
 {
     local -r URL="${1}"
     local -r SRC_BIN_PATH="${2}"
@@ -109,7 +110,7 @@ function install_targz()
     rm -f "${TEMP_DIR}/${BIN_NAME}.tar.gz"
 }
 
-function print_version()
+print_version()
 {
     local -r BIN=${1}
     local OLD_VERSION=${2}
@@ -130,7 +131,7 @@ function print_version()
     fi
 }
 
-function print_report()
+print_report()
 {
     {
         print_version "ctop"      "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
@@ -142,7 +143,7 @@ function print_report()
     echo
 }
 
-function main()
+main()
 {
     check_bash_version
 
