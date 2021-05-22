@@ -1,29 +1,30 @@
 #!/usr/bin/env bash
 
-# Bash setup
-set -o errtrace
+set -Eeuo pipefail
 trap 'print_error ${?} ${LINENO}' ERR
 
 # Arguments
-readonly SCRIPT=$(basename "${0}")
+# shellcheck disable=SC2155
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+# shellcheck disable=SC2155
+readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
 readonly BASH_COMPLETIONS="helm kubectl"
 
 # Functions
-function echo_info()
+echo_info()
 {
     echo "$(tput setaf 6)${*}$(tput sgr0)"
 }
 
-function echo_error()
+echo_error()
 {
     echo "$(tput setaf 1)${*}$(tput sgr0)"
 }
 
-function print_error()
+print_error()
 {
     local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
     local -r STATUS="${1}"
@@ -39,7 +40,7 @@ function print_error()
     echo
 }
 
-function check_bash_version()
+check_bash_version()
 {
     local -r MINIMUM_VERSION="4"
 
@@ -49,7 +50,7 @@ function check_bash_version()
     fi
 }
 
-function check_bin()
+check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
         echo_error "Error: \"${1}\" not found."
@@ -57,7 +58,7 @@ function check_bin()
     fi
 }
 
-function main()
+main()
 {
     check_bash_version
 
