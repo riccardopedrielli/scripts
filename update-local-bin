@@ -62,7 +62,7 @@ check_bin()
 get_latest_github_version()
 {
     local -r PROJECT="${1}"
-    local -r RELEASES="$(curl -sSL "https://api.github.com/repos/${PROJECT}/releases" | jq -r .[].tag_name)"
+    local -r RELEASES="$(curl -sSL "https://api.github.com/repos/${PROJECT}/releases" | jq -r .[].tag_name | head -n 1)"
 
     # shellcheck disable=SC2086
     semver -r "" ${RELEASES} | tail -n 1
