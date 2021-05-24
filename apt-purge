@@ -1,16 +1,36 @@
 #!/usr/bin/env bash
 
-set -e
+# shellcheck disable=SC2155
 
-PURGE_LIST="$(dpkg -l | grep '^rc' | awk '{print $2}')"
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
 
-if [ -n "${PURGE_LIST}" ]; then
-    echo "Packages to purge:"
-    echo -e "${PURGE_LIST}"
+# Arguments
+readonly FLAG="${1:-}"
 
-    if [ "${1}" != "-l" ]; then
-        sudo dpkg --purge "${PURGE_LIST}"
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    readonly PURGE_LIST=$(dpkg -l | grep '^rc' | awk '{print $2}' || true)
+
+    if [ -n "${PURGE_LIST}" ]; then
+        echo "Packages to purge:"
+        echo -e "${PURGE_LIST}"
+        echo
+
+        if [ "${FLAG}" = "-x" ]; then
+            # shellcheck disable=SC2086
+            sudo dpkg --purge ${PURGE_LIST}
+        else
+            echo "Run with -x to actually execute the purging"
+        fi
+    else
+        echo "No packages with residual config"
     fi
-else
-    echo "No packages with residual config"
-fi
+}
+
+main

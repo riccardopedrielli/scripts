@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
-set -e
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
 
-git init -b main .
-git commit --allow-empty --message 'Repo init'
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    git init -b main .
+    git commit --allow-empty --message 'Repo init'
+}
+
+main

@@ -1,56 +1,52 @@
 #!/usr/bin/env bash
 
-# Bash setup
-set -o errtrace
-trap 'print_error ${?} ${LINENO}' ERR
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 trap 'print_report' EXIT
 
 # Arguments
-readonly SCRIPT=$(basename "${0}")
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly TOOLS_DIR="${HOME}/dev/tools"
 readonly TEMP_DIR="/tmp"
 
-# Functions
-function echo_info()
+echo_info()
 {
     echo "$(tput setaf 6)${*}$(tput sgr0)"
 }
 
-function echo_error()
+echo_error()
 {
     echo "$(tput setaf 1)${*}$(tput sgr0)"
 }
 
-function print_error()
+print_error()
 {
-    local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
-    local -r STATUS="${1}"
+    local -r SOURCE_PATH="${1}"
     local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
     local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
 
     echo
-    echo_error "$(tput bold)Error: command exited with status ${STATUS} at ${SCRIPT}:${LINE_NUMBER}"
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
 
-    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${CODE}" | head -n 1)"
-    tail -n +$((LINE_NUMBER + 1)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
     echo
+
+    exit 1
 }
 
-function check_bash_version()
-{
-    local -r MINIMUM_VERSION="4"
-
-    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
-        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
-        exit 1
-    fi
-}
-
-function check_bin()
+check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
         echo_error "Error: \"${1}\" is required but not installed."
@@ -58,7 +54,7 @@ function check_bin()
     fi
 }
 
-function install_targz()
+install_targz()
 {
     local -r URL="${1}"
     local -r TOOL_TAR_PATH="${2}"
@@ -75,7 +71,7 @@ function install_targz()
     rm -f "${TEMP_DIR}/${TOOL_NAME}.tar.gz"
 }
 
-function print_version()
+print_version()
 {
     local -r BIN=${1}
     local OLD_VERSION=${2}
@@ -96,7 +92,7 @@ function print_version()
     fi
 }
 
-function print_report()
+print_report()
 {
     {
         print_version "go" "${GO_VERSION_OLD}" "${GO_VERSION_NEW}"
@@ -104,10 +100,8 @@ function print_report()
     echo
 }
 
-function main()
+main()
 {
-    check_bash_version
-
     check_bin curl
     check_bin tar
 

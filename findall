@@ -1,3 +1,19 @@
 #!/usr/bin/env bash
 
-sudo find / \( -path "/run/user" \) -prune -o -iname "*${1}*" -print
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
+
+# Arguments
+readonly SEARCH="${1}"
+
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    sudo find / \( -path "/run/user" \) -prune -o -iname "*${SEARCH}*" -print
+}
+
+main

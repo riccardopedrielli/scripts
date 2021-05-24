@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-set -Ee
-trap exit ERR
+# shellcheck disable=SC2155
 
-#-----------------------------------------------------------------------------------------------------------------------
+set -Eeuo pipefail
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 
 # Arguments
-OPTION="${1}"
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly OPTION="${1:-}"
 
 # Settings
-PACKAGES=(
+readonly PACKAGES=(
     "diff-so-fancy"
     "dockerfilelint"
     "eslint"
@@ -19,7 +20,37 @@ PACKAGES=(
     "semver"
 )
 
-#-----------------------------------------------------------------------------------------------------------------------
+echo_info()
+{
+    echo "$(tput setaf 6)${*}$(tput sgr0)"
+}
+
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+print_error()
+{
+    local -r SOURCE_PATH="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
+    local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
 
 check_bin()
 {
@@ -29,53 +60,42 @@ check_bin()
     fi
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
-colorecho()
-{
-    echo
-    echo "$(tput setaf 6)${*}$(tput sgr0)"
-}
-
-#-----------------------------------------------------------------------------------------------------------------------
-
 npm_install()
 {
     for PACKAGE in ${PACKAGES[*]}; do
-        colorecho "Installing ${PACKAGE}"
+        echo_info "Installing ${PACKAGE}"
         npm install --global "${PACKAGE}"
     done
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 npm_uninstall()
 {
-    UN_PACKAGES="$(npm list --global --parseable --depth 0 | tail -n +2)"
+    local -r UN_PACKAGES="$(npm list --global --parseable --depth 0 | tail -n +2)"
 
     for PACKAGE in ${UN_PACKAGES}; do
-        PACKAGE=${PACKAGE#*node_modules/}
+        local PACKAGE=${PACKAGE#*node_modules/}
         if [ "${PACKAGE}" != "npm" ]; then
-            colorecho "Uninstalling ${PACKAGE}"
+            echo_info "Uninstalling ${PACKAGE}"
             npm uninstall --global "${PACKAGE}"
         fi
     done
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
+main()
+{
+    check_bin npm
 
-check_bin npm
+    case ${OPTION} in
+        '')
+            npm_install
+            ;;
+        -u)
+            npm_uninstall
+            ;;
+        *)
+            echo "Unrecognized option \"${OPTION}\", use \"-u\" to uninstall the packages"
+            ;;
+    esac
+}
 
-case ${OPTION} in
-    '')
-        npm_install
-        ;;
-    -u)
-        npm_uninstall
-        ;;
-    *)
-        echo "Unrecognized option \"${OPTION}\", use \"-u\" to uninstall the packages"
-        ;;
-esac
-
-#-----------------------------------------------------------------------------------------------------------------------
+main

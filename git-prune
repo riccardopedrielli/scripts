@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
-set -e
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
 
-git reflog expire --expire-unreachable=now --all
-git gc --prune=now
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    git reflog expire --expire-unreachable=now --all
+    git gc --prune=now
+}
+
+main

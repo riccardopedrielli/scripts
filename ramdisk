@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 
-set -e
+# shellcheck disable=SC2155
 
-#-----------------------------------------------------------------------------------------------------------------------
+set -Eeuo pipefail
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 
 # Arguments
-SCRIPT=$(basename "${0}")
-ACTION="${1}"
-SIZE="${2:-1}"
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
+readonly COMMAND="${1:-}"
+readonly SIZE="${2:-1}"
 
 # Settings
-DISK_PATH="/media/ramdisk"
-DISK_USER="rpedrielli"
-
-#-----------------------------------------------------------------------------------------------------------------------
+readonly DISK_PATH="/media/ramdisk"
+readonly DISK_USER="rpedrielli"
 
 print_usage()
 {
     echo
-    echo "Usage: ${SCRIPT} <action> [size]"
+    echo "Usage: ${SCRIPT} <command> [size]"
     echo
-    echo "Actions:"
-    echo "    create    Creates the ramdisk"
-    echo "    delete    Deletes the ramdisk"
+    echo "Commands:"
+    echo "    create  [size]    Creates the ramdisk"
+    echo "    delete            Deletes the ramdisk"
     echo
     echo "    size      The size in GB of the ramdisk (default: 1)"
     echo
@@ -30,7 +30,32 @@ print_usage()
     exit 1
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+print_error()
+{
+    local -r SOURCE_PATH="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
+    local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
 
 ramdisk_create()
 {
@@ -50,8 +75,6 @@ ramdisk_create()
     echo "    Size: ${SIZE}GB"
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 ramdisk_delete()
 {
     if [ ! -e ${DISK_PATH} ]; then
@@ -66,11 +89,9 @@ ramdisk_delete()
     echo "Ramdisk deleted"
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 main()
 {
-    case ${ACTION} in
+    case ${COMMAND} in
 
         create)
             ramdisk_create
@@ -87,12 +108,8 @@ main()
     esac
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 if [ ${EUID} != 0 ]; then
     exec sudo "$0" "$@"
 else
     main
 fi
-
-#-----------------------------------------------------------------------------------------------------------------------

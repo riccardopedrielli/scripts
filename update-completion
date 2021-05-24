@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2155
+
 set -Eeuo pipefail
-trap 'print_error ${?} ${LINENO}' ERR
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 
 # Arguments
-# shellcheck disable=SC2155
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-# shellcheck disable=SC2155
-readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
 readonly BASH_COMPLETIONS="helm kubectl"
 
-# Functions
 echo_info()
 {
     echo "$(tput setaf 6)${*}$(tput sgr0)"
@@ -26,28 +24,24 @@ echo_error()
 
 print_error()
 {
-    local -r CODE="$(pr -tn "${SCRIPT_DIR}/${SCRIPT}")"
-    local -r STATUS="${1}"
+    local -r SOURCE_PATH="${1}"
     local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
     local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
 
     echo
-    echo_error "$(tput bold)Error: command exited with status ${STATUS} at ${SCRIPT}:${LINE_NUMBER}"
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
 
-    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${CODE}" | head -n 1)"
-    tail -n +$((LINE_NUMBER + 1)) <<< "${CODE}" | head -n ${CONTEXT_LINES}
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
     echo
-}
 
-check_bash_version()
-{
-    local -r MINIMUM_VERSION="4"
-
-    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
-        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
-        exit 1
-    fi
+    exit 1
 }
 
 check_bin()
@@ -60,8 +54,6 @@ check_bin()
 
 main()
 {
-    check_bash_version
-
     echo
     echo_info "Generating bash completions"
 

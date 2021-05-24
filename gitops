@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 
-#-----------------------------------------------------------------------------------------------------------------------
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 
 # Arguments
-SCRIPT=$(basename "${0}")
-COMMAND="${1}"
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
+readonly COMMAND="${1:-}"
 
 # Settings
-BASE_DIR="$(pwd)"
-COLOR_REPO="$(tput setaf 2)"
-COLOR_BRANCH="$(tput setaf 1)"
-COLOR_INDENT="$(tput setaf 4)"
-COLOR_OK="$(tput setaf 3)"
-COLOR_ERROR="$(tput setaf 5)"
-COLOR_RESET="$(tput sgr0)"
-
-#-----------------------------------------------------------------------------------------------------------------------
+readonly COLOR_REPO="$(tput setaf 2)"
+readonly COLOR_BRANCH="$(tput setaf 1)"
+readonly COLOR_INDENT="$(tput setaf 4)"
+readonly COLOR_OK="$(tput setaf 3)"
+readonly COLOR_ERROR="$(tput setaf 5)"
+readonly COLOR_RESET="$(tput sgr0)"
 
 print_usage()
 {
@@ -36,27 +37,54 @@ print_usage()
     exit 1
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+print_error()
+{
+    local -r SOURCE_PATH="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
+    local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
+
+    echo
+    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
 
 check_clean()
 {
-    CLEAN=$(git status | grep 'working tree clean' -c)
-    FIXUP=$(git status | grep 'fixup' -c)
+    CLEAN=$(git status | grep 'working tree clean' -c || true)
+    FIXUP=$(git status | grep 'fixup' -c || true)
 
     if [ "${FIXUP}" != "0" ]; then
         CLEAN=0;
     fi
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 repo_status()
 {
-    if [ "${1}" = "nockeck" ]; then
+    local -r CHECK="${1:-}"
+
+    REMOTE=${REMOTE:-1}
+
+    if [ "${CHECK}" != "nockeck" ]; then
         check_clean
     fi
 
-    if [[ "${CLEAN}" = "0" || ! "${NOT_CLEAN_ONLY}" ]]; then
+    if [[ "${CLEAN}" = "0" || "${NOT_CLEAN_ONLY}" = "0" ]]; then
         echo
         echo -n "${COLOR_INDENT}>>>${COLOR_RESET} "
         echo -n "${COLOR_REPO}${DIRECTORY:$((${#BASE_DIR} + 1))}${COLOR_RESET} "
@@ -71,21 +99,17 @@ repo_status()
             git status
         fi
         echo
-    elif [ ! "${NOT_CLEAN_ONLY}" ]; then
+    elif [ "${NOT_CLEAN_ONLY}" = "0" ]; then
         echo "$(tput ht)${COLOR_OK}clean${COLOR_RESET}"
         echo
     fi
 }
-
-#-----------------------------------------------------------------------------------------------------------------------
 
 repo_fetch()
 {
     git fetch --all -tpq
     repo_status
 }
-
-#-----------------------------------------------------------------------------------------------------------------------
 
 repo_pull()
 {
@@ -94,7 +118,7 @@ repo_pull()
     git fetch --all -tpq
 
     if [ "${CLEAN}" = "1" ]; then
-	if git remote get-url origin > /dev/null 2>&1; then
+	    if git remote get-url origin > /dev/null 2>&1; then
             REMOTE=1
             git pull --all --ff -q
         else
@@ -106,21 +130,15 @@ repo_pull()
     repo_status nocheck
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 repo_develop()
 {
     git switch develop
     repo_status nocheck
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
 do_repo_action()
 {
-    echo "${DIRECTORY}"
-
-    DIRECTORIES=$(find "${BASE_DIR}" -type d -name '.git' | sed 's|/.git||' | sort -f)
+    local -r DIRECTORIES=$(find "${BASE_DIR}" -type d -name '.git' | sed 's|/.git||' | sort -f)
 
     for DIRECTORY in ${DIRECTORIES}; do
         cd "${DIRECTORY}" || exit 1
@@ -128,54 +146,51 @@ do_repo_action()
     done
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-
-case ${COMMAND} in
-
-    status)
-        CALL='repo_status'
-        ;;
-
-    fetch)
-        CALL='repo_fetch'
-        ;;
-
-    pull)
-        CALL='repo_pull'
-        ;;
-
-    develop)
-        CALL='repo_develop'
-        ;;
-
-    *)
-        print_usage
-        ;;
-
-esac
-
-shift
-
-while getopts "nd:" OPTION; do
-
-    case ${OPTION} in
-
-        n)
-            NOT_CLEAN_ONLY=1
+main()
+{
+    case ${COMMAND} in
+        status)
+            CALL='repo_status'
             ;;
-
-        d)
-            BASE_DIR=$(realpath "${OPTARG}")
+        fetch)
+            CALL='repo_fetch'
             ;;
-
+        pull)
+            CALL='repo_pull'
+            ;;
+        develop)
+            CALL='repo_develop'
+            ;;
         *)
             print_usage
             ;;
-
     esac
 
-done
+    readonly CALL
 
-do_repo_action
+    shift
 
-#-----------------------------------------------------------------------------------------------------------------------
+    NOT_CLEAN_ONLY=0
+    BASE_DIR="$(pwd)"
+
+    while getopts "nd:" OPTION; do
+        case ${OPTION} in
+            n)
+                NOT_CLEAN_ONLY=1
+                ;;
+            d)
+                BASE_DIR=$(realpath "${OPTARG}")
+                ;;
+            *)
+                print_usage
+                ;;
+        esac
+    done
+
+    readonly NOT_CLEAN_ONLY
+    readonly BASE_DIR
+
+    do_repo_action
+}
+
+main "${@}"

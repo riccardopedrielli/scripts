@@ -1,3 +1,20 @@
 #!/usr/bin/env bash
 
-diff -Naur "${1}" "${2}" | diff-so-fancy
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
+
+# Arguments
+readonly LEFT="${1:-}"
+readonly RIGHT="${2:-}"
+
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    diff -Naur "${LEFT}" "${RIGHT}" | diff-so-fancy
+}
+
+main

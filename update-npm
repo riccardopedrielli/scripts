@@ -1,26 +1,24 @@
 #!/usr/bin/env bash
 
-# Bash setup
-set -o errexit
-set -o errtrace
-set -o pipefail
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
 trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 
 # Arguments
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
-# Functions
-function echo_info()
+echo_info()
 {
     echo "$(tput setaf 6)${*}$(tput sgr0)"
 }
 
-function echo_error()
+echo_error()
 {
     echo "$(tput setaf 1)${*}$(tput sgr0)"
 }
 
-function print_error()
+print_error()
 {
     local -r SOURCE_PATH="${1}"
     local -r LINE_NUMBER="${2}"
@@ -29,7 +27,7 @@ function print_error()
     local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
 
     local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
-    RELATIVE_PATH="${RELATIVE_PATH#/}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
 
     echo
     echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
@@ -42,17 +40,7 @@ function print_error()
     exit 1
 }
 
-function check_bash_version()
-{
-    local -r MINIMUM_VERSION="4"
-
-    if [ "${BASH_VERSINFO[0]}" -lt "${MINIMUM_VERSION}" ]; then
-        echo_error "Error: bash must be at least version ${MINIMUM_VERSION}, current version is ${BASH_VERSINFO[0]}"
-        exit 1
-    fi
-}
-
-function check_bin()
+check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
         echo_error "Error: \"${1}\" is required but not installed."
@@ -60,10 +48,8 @@ function check_bin()
     fi
 }
 
-function main()
+main()
 {
-    check_bash_version
-
     check_bin npm
 
     local PACKAGES

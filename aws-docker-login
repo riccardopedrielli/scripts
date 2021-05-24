@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+trap 'echo_error Program exited with status ${?}' ERR
+
+# Settings
 readonly ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 readonly REGION="$(aws configure get region)"
 readonly ECR_DOMAIN="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 
-aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_DOMAIN}"
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+main()
+{
+    aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_DOMAIN}"
+}
+
+main
