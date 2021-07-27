@@ -8,7 +8,6 @@ trap 'print_report' EXIT
 
 # Arguments
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly TOOLS_DIR="${HOME}/dev/tools"
