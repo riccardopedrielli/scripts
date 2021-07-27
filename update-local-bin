@@ -172,7 +172,7 @@ main()
     # Install jfrog
     echo "Installing jfrog"
     readonly JFROG_VERSION_OLD="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
-    install_bin "https://api.bintray.com/content/jfrog/jfrog-cli-go/\$latest/jfrog-cli-linux-amd64/jfrog?bt_package=jfrog-cli-linux-amd64" \
+    install_bin "https://releases.jfrog.io/artifactory/jfrog-cli/v2/\[RELEASE\]/jfrog-cli-linux-amd64/jfrog" \
         "jfrog"
     readonly JFROG_VERSION_NEW="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
 
