@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -Eeuo pipefail
-trap 'echo_error Program exited with status ${?}' ERR
+trap 'echo_error Error: program exited with status ${?}' ERR
 
 # Arguments
 readonly SEARCH="${1}"

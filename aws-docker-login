@@ -3,7 +3,7 @@
 # shellcheck disable=SC2155
 
 set -Eeuo pipefail
-trap 'echo_error Program exited with status ${?}' ERR
+trap 'echo_error Error: program exited with status ${?}' ERR
 
 # Settings
 readonly ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
