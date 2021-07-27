@@ -157,7 +157,7 @@ main()
     echo "Installing ctop"
     readonly CTOP_VERSION_OLD="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
     local -r CTOP_VERSION_LATEST="$(get_latest_github_version bcicen/ctop)"
-    install_bin "https://github.com/bcicen/ctop/releases/download/v${CTOP_VERSION_LATEST}/ctop-${CTOP_VERSION_LATEST}-linux-amd64" \
+    install_bin "https://github.com/bcicen/ctop/releases/download/${CTOP_VERSION_LATEST}/ctop-${CTOP_VERSION_LATEST}-linux-amd64" \
         "ctop"
     readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
 
