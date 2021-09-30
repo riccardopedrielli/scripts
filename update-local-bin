@@ -104,6 +104,21 @@ install_targz()
     rm -f "${TEMP_DIR}/${BIN_NAME}.tar.gz"
 }
 
+install_zip()
+{
+    local -r URL="${1}"
+    local -r SRC_BIN_PATH="${2}"
+    local -r BIN_NAME="${3}"
+
+    curl -sSL "${URL}" -o "${TEMP_DIR}/${BIN_NAME}.zip"
+    mkdir -p "${TEMP_DIR}/${BIN_NAME}"
+    unzip -q "${TEMP_DIR}/${BIN_NAME}.zip" -d "${TEMP_DIR}/${BIN_NAME}"
+    mv -f "${TEMP_DIR}/${BIN_NAME}/${SRC_BIN_PATH}" "${BIN_DIR}/${BIN_NAME}"
+    chmod +x "${BIN_DIR}/${BIN_NAME}"
+    rm -rf "${TEMP_DIR:?}/${BIN_NAME}"
+    rm -f "${TEMP_DIR}/${BIN_NAME}.zip"
+}
+
 print_version()
 {
     local -r BIN=${1}
@@ -131,6 +146,7 @@ print_report()
         print_version "ctop"           "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
         print_version "jfrog"          "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
         print_version "terraform"      "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
+        print_version "tflint"         "${TFLINT_VERSION_OLD}"    "${TFLINT_VERSION_NEW}"
         print_version "tfsec"          "${TFSEC_VERSION_OLD}"     "${TFSEC_VERSION_NEW}"
         print_version "vagrant"        "${VAGRANT_VERSION_OLD}"   "${VAGRANT_VERSION_NEW}"
     } | column -t -s ' '
@@ -144,6 +160,7 @@ main()
     check_bin unzip
     check_bin tar
     check_bin gzip
+    check_bin zip
     check_bin jq
 
     if [ ! -d "${BIN_DIR}" ]; then
@@ -173,6 +190,14 @@ main()
     readonly TERRAFORM_VERSION_OLD="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
     install_hashicorp_app "terraform"
     readonly TERRAFORM_VERSION_NEW="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
+
+    # Install tflint
+    echo "Installing tflint"
+    readonly TFLINT_VERSION_OLD="$(tflint -v 2> /dev/null | cut -d ' ' -f 3 || true)"
+    local -r TFLINT_VERSION_LATEST="$(get_latest_github_version terraform-linters/tflint)"
+    install_zip "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION_LATEST}/tflint_linux_amd64.zip" \
+        "tflint" "tflint"
+    readonly TFLINT_VERSION_NEW="$(tflint -v 2> /dev/null | cut -d ' ' -f 3 || true)"
 
     # Install tfsec
     echo "Installing tfsec"
