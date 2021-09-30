@@ -6,6 +6,12 @@ trap 'echo_error Error: program exited with status ${?}' ERR
 # Arguments
 readonly SEARCH="${1}"
 
+# Settings
+readonly BASE_PATH="${HOME}"
+readonly EXCLUDE_PATHS=(
+    "${HOME}/dev/docker-data"
+)
+
 echo_error()
 {
     echo "$(tput setaf 1)${*}$(tput sgr0)"
@@ -13,7 +19,16 @@ echo_error()
 
 main()
 {
-    find "${HOME}" -iname "*${SEARCH}*" -print
+    local EXCLUDE_ARGS=""
+
+    for EXCLUDE_PATH in ${EXCLUDE_PATHS[*]}; do
+        EXCLUDE_ARGS="${EXCLUDE_ARGS:-} -path ${EXCLUDE_PATH} -o"
+    done
+
+    EXCLUDE_ARGS="${EXCLUDE_ARGS:: -3}"
+
+    # shellcheck disable=SC2086
+    find ${BASE_PATH} \( ${EXCLUDE_ARGS} \) -prune -o -iname "*${SEARCH}*" -print
 }
 
 main
