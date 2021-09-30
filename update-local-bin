@@ -107,8 +107,8 @@ install_targz()
 print_version()
 {
     local -r BIN=${1}
-    local OLD_VERSION=${2}
-    local NEW_VERSION=${3}
+    local OLD_VERSION=${2:-}
+    local NEW_VERSION=${3:-}
 
     if [ -z "${OLD_VERSION}" ]; then
         OLD_VERSION="None"
@@ -155,38 +155,38 @@ main()
 
     # Install ctop
     echo "Installing ctop"
-    readonly CTOP_VERSION_OLD="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
+    readonly CTOP_VERSION_OLD="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//' || true)"
     local -r CTOP_VERSION_LATEST="$(get_latest_github_version bcicen/ctop)"
     install_bin "https://github.com/bcicen/ctop/releases/download/${CTOP_VERSION_LATEST}/ctop-${CTOP_VERSION_LATEST}-linux-amd64" \
         "ctop"
-    readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//')"
+    readonly CTOP_VERSION_NEW="$(ctop -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/.$//' || true)"
 
     # Install jfrog
     echo "Installing jfrog"
-    readonly JFROG_VERSION_OLD="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
+    readonly JFROG_VERSION_OLD="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3 || true)"
     install_bin "https://releases.jfrog.io/artifactory/jfrog-cli/v2/\[RELEASE\]/jfrog-cli-linux-amd64/jfrog" \
         "jfrog"
-    readonly JFROG_VERSION_NEW="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3)"
+    readonly JFROG_VERSION_NEW="$(jfrog -v 2> /dev/null | cut -d ' ' -f 3 || true)"
 
     # Install terraform
     echo "Installing terraform"
-    readonly TERRAFORM_VERSION_OLD="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//')"
+    readonly TERRAFORM_VERSION_OLD="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
     install_hashicorp_app "terraform"
-    readonly TERRAFORM_VERSION_NEW="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//')"
+    readonly TERRAFORM_VERSION_NEW="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
 
     # Install tfsec
     echo "Installing tfsec"
-    readonly TFSEC_VERSION_OLD="$(tfsec -v 2> /dev/null)"
+    readonly TFSEC_VERSION_OLD="$(tfsec -v 2> /dev/null || true)"
     local -r TFSEC_VERSION_LATEST="$(get_latest_github_version aquasecurity/tfsec)"
     install_bin "https://github.com/aquasecurity/tfsec/releases/download/v${TFSEC_VERSION_LATEST}/tfsec-linux-amd64" \
         "tfsec"
-    readonly TFSEC_VERSION_NEW="$(tfsec -v 2> /dev/null)"
+    readonly TFSEC_VERSION_NEW="$(tfsec -v 2> /dev/null || true)"
 
     # Install vagrant
     echo "Installing vagrant"
-    readonly VAGRANT_VERSION_OLD="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
+    readonly VAGRANT_VERSION_OLD="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2 || true)"
     install_hashicorp_app "vagrant"
-    readonly VAGRANT_VERSION_NEW="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2)"
+    readonly VAGRANT_VERSION_NEW="$(vagrant -v 2> /dev/null | cut -d ' ' -f 2 || true)"
 
     # Report
     echo
