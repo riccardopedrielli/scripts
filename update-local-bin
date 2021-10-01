@@ -143,8 +143,6 @@ main()
     check_bin semver
     check_bin curl
     check_bin unzip
-    check_bin tar
-    check_bin gzip
     check_bin zip
     check_bin jq
 
