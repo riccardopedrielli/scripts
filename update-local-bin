@@ -128,12 +128,13 @@ print_version()
 print_report()
 {
     {
-        print_version "ctop"           "${CTOP_VERSION_OLD}"      "${CTOP_VERSION_NEW}"
-        print_version "jfrog"          "${JFROG_VERSION_OLD}"     "${JFROG_VERSION_NEW}"
-        print_version "terraform"      "${TERRAFORM_VERSION_OLD}" "${TERRAFORM_VERSION_NEW}"
-        print_version "tflint"         "${TFLINT_VERSION_OLD}"    "${TFLINT_VERSION_NEW}"
-        print_version "tfsec"          "${TFSEC_VERSION_OLD}"     "${TFSEC_VERSION_NEW}"
-        print_version "vagrant"        "${VAGRANT_VERSION_OLD}"   "${VAGRANT_VERSION_NEW}"
+        print_version "ctop"       "${CTOP_VERSION_OLD}"       "${CTOP_VERSION_NEW}"
+        print_version "jfrog"      "${JFROG_VERSION_OLD}"      "${JFROG_VERSION_NEW}"
+        print_version "terraform"  "${TERRAFORM_VERSION_OLD}"  "${TERRAFORM_VERSION_NEW}"
+        print_version "terragrunt" "${TERRAGRUNT_VERSION_OLD}" "${TERRAGRUNT_VERSION_NEW}"
+        print_version "tflint"     "${TFLINT_VERSION_OLD}"     "${TFLINT_VERSION_NEW}"
+        print_version "tfsec"      "${TFSEC_VERSION_OLD}"      "${TFSEC_VERSION_NEW}"
+        print_version "vagrant"    "${VAGRANT_VERSION_OLD}"    "${VAGRANT_VERSION_NEW}"
     } | column -t -s ' '
     echo
 }
@@ -173,6 +174,14 @@ main()
     readonly TERRAFORM_VERSION_OLD="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
     install_hashicorp_app "terraform"
     readonly TERRAFORM_VERSION_NEW="$(terraform -v 2> /dev/null | head -n 1 | cut -d ' ' -f 2 | sed 's/^.//' || true)"
+
+    # Install terragrunt
+    echo "Installing terragrunt"
+    readonly TERRAGRUNT_VERSION_OLD="$(terragrunt -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/^.//' || true)"
+    local -r TERRAGRUNT_VERSION_LATEST="$(get_latest_github_version gruntwork-io/terragrunt)"
+    install_bin "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION_LATEST}/terragrunt_linux_amd64" \
+        "terragrunt"
+    readonly TERRAGRUNT_VERSION_NEW="$(terragrunt -v 2> /dev/null | cut -d ' ' -f 3 | sed 's/^.//' || true)"
 
     # Install tflint
     echo "Installing tflint"
