@@ -111,8 +111,7 @@ main()
 
     popd > /dev/null || exit 1
 
-    echo_info "Done"
-    echo
+    print_version
 }
 
 main
