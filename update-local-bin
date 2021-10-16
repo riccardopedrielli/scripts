@@ -193,6 +193,7 @@ main()
 
     # Arguments  "binary"      "install type"   "github path or url"        "binary path in archive"
     install_app  "ctop"        "github_bin"     "bcicen/ctop"               ""
+    install_app  "driftctl"    "github_bin"     "cloudskiff/driftctl"       ""
     install_app  "jfrog"       "bin"            "${JFROG_URL}"              ""
     install_app  "terraform"   "hashicorp_app"  ""                          ""
     install_app  "terragrunt"  "github_bin"     "gruntwork-io/terragrunt"   ""
