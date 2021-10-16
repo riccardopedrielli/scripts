@@ -11,6 +11,7 @@ readonly BASE_PATH="/"
 readonly EXCLUDE_PATHS=(
     "${HOME}/dev/docker-data"
     "/run/user"
+    "/proc"
 )
 
 echo_error()
