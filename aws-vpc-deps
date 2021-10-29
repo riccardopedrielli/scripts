@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+trap 'echo_error Error: program exited with status ${?}' ERR
+
+# Arguments
+readonly SCRIPT=$(basename "${0}")
+readonly AWS_VPC_ID="${1:-}"
+readonly AWS_PROFILE_ARG="${2:-}"
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <vpc_id> [profile]"
+    echo
+    echo "Display the dependencies of an AWS VPC."
+    echo "Useful for debugging errors when trying to delete the VPC."
+    echo
+    echo "Arguments:"
+    echo "   vpc_id     ID of the VPC to analyze."
+    echo "   profile    [Optional] If omitted, the profile must be set via the AWS_PROFILE environment variable."
+    echo
+    echo
+
+    exit 1
+}
+
+echo_error()
+{
+    echo "$(tput setaf 1)${*}$(tput sgr0)"
+}
+
+get_objects()
+{
+    local -r OBJECT="${1}"
+    local -r FILTER_FLAG="${2}"
+    local -r FILTER_VALUE="${3}"
+    local -r FIELD="${4}"
+
+    local -r PADDED_FIELD="$(printf '%-30s' "${FIELD}")"
+
+    aws ec2 "describe-${OBJECT}" "--${FILTER_FLAG}" "${FILTER_VALUE}" \
+        | { grep "${FIELD}" || true; } \
+        | awk '{print $2}' \
+        | xargs echo -e "${PADDED_FIELD}"
+}
+
+main()
+{
+    if [ -z "${AWS_PROFILE:-}" ]; then
+        if [ -z "${AWS_PROFILE_ARG}" ]; then
+            echo_error "An AWS profile must be passed as argument or set via the AWS_PROFILE environment variable"
+            exit 1
+        else
+            readonly AWS_PROFILE="${AWS_PROFILE_ARG}"
+            export AWS_PROFILE
+        fi
+    fi
+
+    get_objects internet-gateways       "filters" "Name=attachment.vpc-id,Values=${AWS_VPC_ID}"         "InternetGatewayId"
+    get_objects subnets                 "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "SubnetId"
+    get_objects route-tables            "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "RouteTableId"
+    get_objects network-acls            "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "NetworkAclId"
+    get_objects vpc-peering-connections "filters" "Name=requester-vpc-info.vpc-id,Values=${AWS_VPC_ID}" "VpcPeeringConnectionId"
+    get_objects vpc-endpoints           "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "VpcEndpointId"
+    get_objects nat-gateways            "filter"  "Name=vpc-id,Values=${AWS_VPC_ID}"                    "NatGatewayId"
+    get_objects security-groups         "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "GroupId"
+    get_objects instances               "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "InstanceId"
+    get_objects vpn-connections         "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "VpnConnectionId"
+    get_objects vpn-gateways            "filters" "Name=attachment.vpc-id,Values=${AWS_VPC_ID}"         "VpnGatewayId"
+    get_objects network-interfaces      "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "NetworkInterfaceId"
+}
+
+main
