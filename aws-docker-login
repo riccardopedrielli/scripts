@@ -5,10 +5,8 @@
 set -Eeuo pipefail
 trap 'echo_error Error: program exited with status ${?}' ERR
 
-# Settings
-readonly ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
-readonly REGION="$(aws configure get region)"
-readonly ECR_DOMAIN="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+# Arguments
+readonly AWS_PROFILE_ARG="${1:-}"
 
 echo_error()
 {
@@ -17,6 +15,20 @@ echo_error()
 
 main()
 {
+    if [ -z "${AWS_PROFILE:-}" ]; then
+        if [ -z "${AWS_PROFILE_ARG}" ]; then
+            echo_error "An AWS profile must be passed as argument or set via the AWS_PROFILE environment variable"
+            exit 1
+        else
+            readonly AWS_PROFILE="${AWS_PROFILE_ARG}"
+            export AWS_PROFILE
+        fi
+    fi
+
+    ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+    REGION="$(aws configure get region)"
+    readonly ECR_DOMAIN="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+
     aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_DOMAIN}"
 }
 
