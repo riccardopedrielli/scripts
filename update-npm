@@ -53,7 +53,7 @@ main()
     check_bin npm
 
     local PACKAGES
-    PACKAGES="$(npm outdated --global --parseable --depth 0)"
+    PACKAGES="$(npm outdated --global --parseable --depth 0 || true)"
 
     if [ -n "${PACKAGES}" ]; then
 
