@@ -11,13 +11,30 @@ readonly OPTION="${1:-}"
 
 # Settings
 readonly PACKAGES=(
+    "@quasar/cli"
+    "@vue/cli-service"
+    "@vue/cli"
+    "concurrently"
+    "corepack"
+    "create-react-app"
     "diff-so-fancy"
     "dockerfilelint"
     "eslint"
+    "express-generator"
+    "gulp-cli"
     "list-repos"
     "markdownlint-cli"
+    "nodemon"
+    "npm-check-updates"
     "npm"
+    "parcel"
+    "pm2"
     "semver"
+    "serve"
+    "snowpack"
+    "typescript"
+    "webpack-cli"
+    "webpack"
 )
 
 echo_info()
