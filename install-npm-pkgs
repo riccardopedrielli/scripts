@@ -62,7 +62,7 @@ check_bin()
 
 npm_install()
 {
-    for PACKAGE in ${PACKAGES[*]}; do
+    for PACKAGE in "${PACKAGES[@]}"; do
         echo_info "Installing ${PACKAGE}"
         npm install --global "${PACKAGE}"
     done
