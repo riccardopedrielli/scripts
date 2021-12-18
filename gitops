@@ -11,12 +11,12 @@ readonly SCRIPT=$(basename "${0}")
 readonly COMMAND="${1:-}"
 
 # Settings
-readonly COLOR_REPO="$(tput setaf 2)"
-readonly COLOR_BRANCH="$(tput setaf 1)"
-readonly COLOR_INDENT="$(tput setaf 4)"
-readonly COLOR_OK="$(tput setaf 3)"
-readonly COLOR_ERROR="$(tput setaf 5)"
-readonly COLOR_RESET="$(tput sgr0)"
+readonly COLOR_REPO="\e[0;32m"
+readonly COLOR_BRANCH="\e[0;31m"
+readonly COLOR_INDENT="\e[0;34m"
+readonly COLOR_OK="\e[0;33m"
+readonly COLOR_ERROR="\e[0;35m"
+readonly COLOR_RESET="\e[0m"
 
 print_usage()
 {
@@ -39,7 +39,7 @@ print_usage()
 
 echo_error()
 {
-    echo "$(tput setaf 1)${*}$(tput sgr0)"
+    echo -e "\e[0;31m${*}\e[0m"
 }
 
 print_error()
@@ -54,10 +54,10 @@ print_error()
     local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
 
     echo
-    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
 
     tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
     tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
     echo
 
@@ -86,21 +86,21 @@ repo_status()
 
     if [[ "${CLEAN}" = "0" || "${NOT_CLEAN_ONLY}" = "0" ]]; then
         echo
-        echo -n "${COLOR_INDENT}>>>${COLOR_RESET} "
-        echo -n "${COLOR_REPO}${DIRECTORY:$((${#BASE_DIR} + 1))}${COLOR_RESET} "
-        echo    "${COLOR_BRANCH}($(git status | head -n1 | awk '{print $3}'))${COLOR_RESET}"
+        echo -en "${COLOR_INDENT}>>>${COLOR_RESET} "
+        echo -en "${COLOR_REPO}${DIRECTORY:$((${#BASE_DIR} + 1))}${COLOR_RESET} "
+        echo -e  "${COLOR_BRANCH}($(git status | head -n1 | awk '{print $3}'))${COLOR_RESET}"
         echo
     fi
 
     if [ "${CLEAN}" = "0" ]; then
         if [ "${REMOTE}" = "0" ]; then
-            echo "$(tput ht)${COLOR_ERROR}Remote 'origin' is not set${COLOR_RESET}"
+            echo -e "\t${COLOR_ERROR}Remote 'origin' is not set${COLOR_RESET}"
         else
             git status
         fi
         echo
     elif [ "${NOT_CLEAN_ONLY}" = "0" ]; then
-        echo "$(tput ht)${COLOR_OK}clean${COLOR_RESET}"
+        echo -e "\t${COLOR_OK}clean${COLOR_RESET}"
         echo
     fi
 }

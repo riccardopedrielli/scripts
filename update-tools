@@ -15,12 +15,12 @@ readonly TEMP_DIR="/tmp"
 
 echo_info()
 {
-    echo "$(tput setaf 6)${*}$(tput sgr0)"
+    echo -e "\e[0;36m${*}\e[0m"
 }
 
 echo_error()
 {
-    echo "$(tput setaf 1)${*}$(tput sgr0)"
+    echo -e "\e[0;31m${*}\e[0m"
 }
 
 print_error()
@@ -35,10 +35,10 @@ print_error()
     local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
 
     echo
-    echo_error "$(tput bold)Error: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
 
     tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "$(tput bold)$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
     tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
     echo
 
@@ -87,7 +87,7 @@ print_version()
     if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
         echo "${BIN}: ${NEW_VERSION}"
     else
-        echo "$(tput setaf 3)${BIN}: ${OLD_VERSION} -> ${NEW_VERSION}$(tput sgr0)"
+        echo -e "\e[0;33m${BIN}: ${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
     fi
 }
 

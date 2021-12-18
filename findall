@@ -16,13 +16,14 @@ readonly EXCLUDE_PATHS=(
 
 echo_error()
 {
-    echo "$(tput setaf 1)${*}$(tput sgr0)"
+    echo -e "\e[0;31m${*}\e[0m"
 }
 
 main()
 {
     local EXCLUDE_ARGS=""
 
+    # shellcheck disable=SC2048
     for EXCLUDE_PATH in ${EXCLUDE_PATHS[*]}; do
         EXCLUDE_ARGS="${EXCLUDE_ARGS} -path ${EXCLUDE_PATH} -o"
     done

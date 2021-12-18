@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2155
-
 set -Eeuo pipefail
 trap 'echo_error Error: program exited with status ${?}' ERR
 
@@ -10,7 +8,7 @@ readonly AWS_PROFILE_ARG="${1:-}"
 
 echo_error()
 {
-    echo "$(tput setaf 1)${*}$(tput sgr0)"
+    echo -e "\e[0;31m${*}\e[0m"
 }
 
 main()
