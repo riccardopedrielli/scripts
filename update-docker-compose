@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
+
+# Arguments
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+
+# Settings
+readonly BIN_DIR="${HOME}/.docker/cli-plugins"
+readonly BIN_NAME="docker-compose"
+readonly DOWNLOAD_URL="https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64"
+
+echo_error()
+{
+    echo -e "\e[0;31m${*}\e[0m"
+}
+
+print_error()
+{
+    local -r SOURCE_PATH="${1}"
+    local -r LINE_NUMBER="${2}"
+    local -r EXIT_STATUS="${3}"
+    local -r CONTEXT_LINES="3"
+    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
+
+    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
+    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
+
+    echo
+    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
+
+    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
+    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
+    echo
+
+    exit 1
+}
+
+check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+get_version()
+{
+    RAW_VERSION="$("${BIN_DIR}/${BIN_NAME}" version 2> /dev/null || true)"
+
+    echo "${RAW_VERSION}" \
+        | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)' \
+        | head -n 1 \
+        || true
+}
+
+print_version()
+{
+    local OLD_VERSION=${1:-}
+    local NEW_VERSION=${2:-}
+
+    if [ -z "${OLD_VERSION}" ]; then
+        OLD_VERSION="none"
+    fi
+
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="error getting the new version"
+    fi
+
+    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+        echo -e "Already at newest version: \e[0;32m${NEW_VERSION}\e[0m"
+    else
+        echo -e "Version updated: \e[0;33m${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
+    fi
+}
+
+main()
+{
+    check_bin curl
+    check_bin grep
+
+    if [ ! -d "${BIN_DIR}" ]; then
+        mkdir -p "${BIN_DIR}"
+    fi
+
+    echo
+    echo "Installing ${BIN_NAME}"
+
+    local -r OLD_VERSION="$(get_version "${BIN_NAME}")"
+
+    curl -sSL "${DOWNLOAD_URL}" -o "${BIN_DIR}/${BIN_NAME}"
+    chmod +x "${BIN_DIR}/${BIN_NAME}"
+
+    local -r NEW_VERSION="$(get_version "${BIN_NAME}")"
+
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
+    echo
+}
+
+main
