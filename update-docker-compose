@@ -8,11 +8,6 @@ trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
 # Arguments
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
-# Settings
-readonly BIN_DIR="${HOME}/.docker/cli-plugins"
-readonly BIN_NAME="docker-compose"
-readonly DOWNLOAD_URL="https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64"
-
 echo_error()
 {
     echo -e "\e[0;31m${*}\e[0m"
@@ -50,7 +45,8 @@ check_bin()
 
 get_version()
 {
-    RAW_VERSION="$("${BIN_DIR}/${BIN_NAME}" version 2> /dev/null || true)"
+    local -r BIN_PATH="${1}"
+    local -r RAW_VERSION="$("${BIN_PATH}" version 2> /dev/null || true)"
 
     echo "${RAW_VERSION}" \
         | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)' \
@@ -78,24 +74,39 @@ print_version()
     fi
 }
 
+install_app()
+{
+    local -r BIN_NAME="${1}"
+    local -r DESTINATION_DIR="${2}"
+    local -r GITHUB_PATH="${3}"
+    local -r GITHUB_BIN_NAME="${4}"
+
+    local -r BIN_PATH="${DESTINATION_DIR}/${BIN_NAME}"
+    local -r URL="https://github.com/${GITHUB_PATH}/releases/latest/download/${GITHUB_BIN_NAME}"
+
+    if [ ! -d "${DESTINATION_DIR}" ]; then
+        mkdir -p "${DESTINATION_DIR}"
+    fi
+
+    curl -sSL "${URL}" -o "${BIN_PATH}"
+    chmod +x "${BIN_PATH}"
+}
+
 main()
 {
     check_bin curl
     check_bin grep
 
-    if [ ! -d "${BIN_DIR}" ]; then
-        mkdir -p "${BIN_DIR}"
-    fi
-
     echo
-    echo "Installing ${BIN_NAME}"
+    echo "Installing docker-compose and docker-compose-switch"
 
-    local -r OLD_VERSION="$(get_version "${BIN_NAME}")"
+    local -r OLD_VERSION="$(get_version docker-compose)"
 
-    curl -sSL "${DOWNLOAD_URL}" -o "${BIN_DIR}/${BIN_NAME}"
-    chmod +x "${BIN_DIR}/${BIN_NAME}"
+    # Arguments  "binary name"     "destination directory"        "github path"            "github binary name"
+    install_app  "docker-compose"  "${HOME}/.docker/cli-plugins"  "docker/compose"         "docker-compose-linux-x86_64"
+    install_app  "docker-compose"  "${HOME}/dev/bin"              "docker/compose-switch"  "docker-compose-linux-amd64"
 
-    local -r NEW_VERSION="$(get_version "${BIN_NAME}")"
+    local -r NEW_VERSION="$(get_version docker-compose)"
 
     print_version "${OLD_VERSION}" "${NEW_VERSION}"
     echo
