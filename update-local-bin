@@ -14,7 +14,9 @@ readonly SCRIPT=$(basename "${0}")
 readonly BIN_DIR="${HOME}/dev/bin"
 readonly TEMP_DIR="/tmp/${SCRIPT}"
 readonly OS="linux"
-readonly ARCH="amd64"
+readonly ARCH_1="amd64"
+readonly ARCH_2="x86_64"
+readonly ARCH_3="musl"
 
 echo_info()
 {
@@ -98,8 +100,8 @@ get_github_url()
 
     curl -fsSL "https://api.github.com/repos/${GITHUB_PATH}/releases/latest" | \
         jq -r .assets[].browser_download_url | \
-        grep -vE '\.asc$|\.sig$' | \
-        grep "${OS}.*${ARCH}"
+        grep -iE "${OS}.*(${ARCH_1}|${ARCH_2}|${ARCH_3})" | \
+        grep -vE '\.asc$|\.sig$|\.deb$|\.rpm$'
 }
 
 install_bin()
@@ -151,10 +153,10 @@ install_hashicorp_app()
 {
     local -r APP="${1}"
 
-    local -r APP_VERSION="$(curl -fsSL "https://checkpoint-api.hashicorp.com/v1/check/${APP}" | jq -r '.current_version')"
-    local -r APP_URL="https://releases.hashicorp.com/${APP}/${APP_VERSION}/${APP}_${APP_VERSION}_${OS}_${ARCH}.zip"
+    local -r VERSION="$(curl -fsSL "https://checkpoint-api.hashicorp.com/v1/check/${APP}" | jq -r '.current_version')"
+    local -r URL="https://releases.hashicorp.com/${APP}/${VERSION}/${APP}_${VERSION}_${OS}_${ARCH_1}.zip"
 
-    curl -sSL "${APP_URL}" -o "${TEMP_DIR}/${APP}.zip"
+    curl -sSL "${URL}" -o "${TEMP_DIR}/${APP}.zip"
 
     unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}"
     rm -f "${TEMP_DIR}/${APP}.zip"
