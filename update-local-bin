@@ -4,13 +4,15 @@
 
 set -Eeuo pipefail
 trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
+trap 'rm -rf ${TEMP_DIR}' EXIT
 
 # Arguments
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
-readonly TEMP_DIR="/tmp"
+readonly TEMP_DIR="/tmp/${SCRIPT}"
 readonly OS="linux"
 readonly ARCH="amd64"
 
@@ -192,7 +194,13 @@ main()
         mkdir -p "${BIN_DIR}"
     fi
 
-    local -r JFROG_URL="https://releases.jfrog.io/artifactory/jfrog-cli/v2/\[RELEASE\]/jfrog-cli-${OS}-${ARCH}/jfrog"
+    if [ -d "${TEMP_DIR}" ]; then
+        rm -rf "${TEMP_DIR}"
+    fi
+
+    mkdir -p "${TEMP_DIR}"
+
+    local -r JFROG_URL="https://releases.jfrog.io/artifactory/jfrog-cli/v2/\[RELEASE\]/jfrog-cli-${OS}-${ARCH_1}/jfrog"
 
     echo
     echo_info "Installing binaries"
