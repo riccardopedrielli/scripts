@@ -113,19 +113,32 @@ install_bin()
     chmod +x "${BIN_DIR}/${BIN_NAME}"
 }
 
-install_zip()
+install_archive()
 {
-    local -r BIN_NAME="${1}"
-    local -r URL="${2}"
-    local -r ARCHIVE_BIN_PATH="${3}"
+    local -r ARCHIVE_TYPE="${1}"
+    local -r BIN_NAME="${2}"
+    local -r URL="${3}"
+    local -r ARCHIVE_BIN_PATH="${4}"
 
-    curl -sSL "${URL}" -o "${TEMP_DIR}/${BIN_NAME}.zip"
-    mkdir -p "${TEMP_DIR}/${BIN_NAME}"
-    unzip -q "${TEMP_DIR}/${BIN_NAME}.zip" -d "${TEMP_DIR}/${BIN_NAME}"
-    mv -f "${TEMP_DIR}/${BIN_NAME}/${ARCHIVE_BIN_PATH}" "${BIN_DIR}/${BIN_NAME}"
+    local -r ARCHIVE_PATH="${TEMP_DIR}/${BIN_NAME}.${ARCHIVE_TYPE}"
+
+    case ${ARCHIVE_TYPE} in
+        zip)
+            local -r EXTRACT_CMD=(unzip -jqo "${ARCHIVE_PATH}" -d "${BIN_DIR}" "${ARCHIVE_BIN_PATH}")
+            ;;
+        tar.gz)
+            local -r EXTRACT_CMD=(tar xzf "${ARCHIVE_PATH}" -C "${BIN_DIR}" "${ARCHIVE_BIN_PATH}" --transform 's|.*/||')
+            ;;
+        *)
+            print_error "Error: invalid archive type: ${ARCHIVE_TYPE}"
+            exit 1
+    esac
+
+    curl -sSL "${URL}" -o "${ARCHIVE_PATH}"
+    # shellcheck disable=SC2068
+    ${EXTRACT_CMD[@]}
     chmod +x "${BIN_DIR}/${BIN_NAME}"
-    rm -rf "${TEMP_DIR:?}/${BIN_NAME}"
-    rm -f "${TEMP_DIR}/${BIN_NAME}.zip"
+    rm -f "${ARCHIVE_PATH}"
 }
 
 install_github_bin()
@@ -146,7 +159,18 @@ install_github_zip()
 
     local -r DOWNLOAD_URL="$(get_github_url "${GITHUB_PATH}")"
 
-    install_zip "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
+    install_archive "zip" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
+}
+
+install_github_targz()
+{
+    local -r BIN_NAME="${1}"
+    local -r GITHUB_PATH="${2}"
+    local -r ARCHIVE_BIN_PATH="${3}"
+
+    local -r DOWNLOAD_URL="$(get_github_url "${GITHUB_PATH}")"
+
+    install_archive "tar.gz" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
 }
 
 install_hashicorp_app()
@@ -190,6 +214,7 @@ main()
     check_bin curl
     check_bin grep
     check_bin jq
+    check_bin tar
     check_bin unzip
 
     if [ ! -d "${BIN_DIR}" ]; then
