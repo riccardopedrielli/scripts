@@ -57,7 +57,12 @@ check_bin()
 get_version()
 {
     local -r BIN_NAME="${1}"
-    local -r RAW_VERSION="$(${BIN_NAME} -v 2> /dev/null || ${BIN_NAME} version 2> /dev/null || true)"
+    local -r RAW_VERSION="$(
+        ${BIN_NAME} -v 2> /dev/null || \
+        ${BIN_NAME} version 2> /dev/null || \
+        ${BIN_NAME} --version 2> /dev/null || \
+        true
+    )"
 
     echo "${RAW_VERSION}" \
         | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)' \
