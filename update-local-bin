@@ -173,22 +173,6 @@ install_github_targz()
     install_archive "tar.gz" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
 }
 
-install_hashicorp_app()
-{
-    local -r APP="${1}"
-
-    local -r VERSION="$(curl -fsSL "https://checkpoint-api.hashicorp.com/v1/check/${APP}" | jq -r '.current_version')"
-    local -r URL="https://releases.hashicorp.com/${APP}/${VERSION}/${APP}_${VERSION}_${OS}_${ARCH_1}.zip"
-
-    curl -sSL "${URL}" -o "${TEMP_DIR}/${APP}.zip"
-
-    unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}"
-    rm -f "${TEMP_DIR}/${APP}.zip"
-
-    mv -f "${TEMP_DIR}/${APP}" "${BIN_DIR}/${APP}"
-    chmod +x "${BIN_DIR}/${APP}"
-}
-
 install_app()
 {
     local -r BIN_NAME="${1}"
@@ -237,11 +221,9 @@ main()
     install_app  "driftctl"   "github_bin"     "cloudskiff/driftctl"       ""
     install_app  "gitui"      "github_targz"   "extrawurst/gitui"          "./gitui"
     install_app  "jfrog"      "bin"            "${JFROG_URL}"              ""
-    install_app  "terraform"  "hashicorp_app"  ""                          ""
     install_app  "terrascan"  "github_targz"   "accurics/terrascan"        "terrascan"
     install_app  "tflint"     "github_zip"     "terraform-linters/tflint"  "tflint"
     install_app  "tfsec"      "github_bin"     "aquasecurity/tfsec"        ""
-    install_app  "vagrant"    "hashicorp_app"  ""                          ""
 
     echo
     echo_info "Update completed"
