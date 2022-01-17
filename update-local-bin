@@ -211,8 +211,6 @@ main()
 
     mkdir -p "${TEMP_DIR}"
 
-    local -r JFROG_URL="https://releases.jfrog.io/artifactory/jfrog-cli/v2/\[RELEASE\]/jfrog-cli-${OS}-${ARCH_1}/jfrog"
-
     echo
     echo_info "Installing binaries"
 
@@ -220,7 +218,6 @@ main()
     install_app  "ctop"       "github_bin"     "bcicen/ctop"               ""
     install_app  "driftctl"   "github_bin"     "cloudskiff/driftctl"       ""
     install_app  "gitui"      "github_targz"   "extrawurst/gitui"          "./gitui"
-    install_app  "jfrog"      "bin"            "${JFROG_URL}"              ""
     install_app  "terrascan"  "github_targz"   "accurics/terrascan"        "terrascan"
     install_app  "tflint"     "github_zip"     "terraform-linters/tflint"  "tflint"
     install_app  "tfsec"      "github_bin"     "aquasecurity/tfsec"        ""
