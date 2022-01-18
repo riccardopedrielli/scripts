@@ -86,6 +86,10 @@ main()
     check_bin yq
     yq shell-completion bash > "${BASH_COMPLETION_DIR}/yq"
 
+    echo "Generating kubectl krew completion"
+    check_bin yq
+    kubectl krew completion bash > "${BASH_COMPLETION_DIR}/kubectl-krew"
+
     echo_info "Operation completed"
     echo
 }
