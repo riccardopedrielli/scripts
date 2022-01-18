@@ -10,12 +10,6 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 # Settings
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
-readonly BASH_COMPLETIONS="helm kubectl"
-
-echo_info()
-{
-    echo -e "\e[0;36m${*}\e[0m"
-}
 
 echo_error()
 {
@@ -52,46 +46,51 @@ check_bin()
     fi
 }
 
+echo_generate()
+{
+    echo "Generate bash completion: ${*}"
+}
+
 main()
 {
-    echo
-    echo_info "Generating bash completions"
-
     if [ ! -d "${BASH_COMPLETION_DIR}" ]; then
         mkdir -p "${BASH_COMPLETION_DIR}"
     fi
 
-    rm -f "${BASH_COMPLETION_DIR}"/*
+    rm -rf "${BASH_COMPLETION_DIR:?}"/*
 
-    for COMPLETION in ${BASH_COMPLETIONS}; do
-        echo "Generating ${COMPLETION} completion"
-        check_bin "${COMPLETION}"
-        ${COMPLETION} completion bash > "${BASH_COMPLETION_DIR}/${COMPLETION}"
-    done
+    echo_generate helm
+    check_bin helm
+    helm completion bash > "${BASH_COMPLETION_DIR}/helm"
 
-    echo "Generating jfrog completion"
+    echo_generate jfrog
     check_bin jfrog
     export JFROG_CLI_HOME_DIR="${BASH_COMPLETION_DIR}"
     jfrog completion bash > /dev/null
 
-    echo "Generating pip3 completion"
-    check_bin pip3
-    pip3 completion --bash > "${BASH_COMPLETION_DIR}/pip3"
+    echo_generate kubectl
+    check_bin kubectl
+    kubectl completion bash > "${BASH_COMPLETION_DIR}/kubectl"
 
-    echo "Generating npm completion"
+    echo_generate kubectl krew
+    check_bin kubectl-krew
+    kubectl krew completion bash > "${BASH_COMPLETION_DIR}/kubectl-krew"
+
+    echo_generate npm
     check_bin npm
     npm completion > "${BASH_COMPLETION_DIR}/npm"
 
-    echo "Generating yq completion"
+    echo_generate pip
+    check_bin pip
+    pip completion --bash > "${BASH_COMPLETION_DIR}/pip"
+
+    echo_generate pip3
+    check_bin pip3
+    pip3 completion --bash > "${BASH_COMPLETION_DIR}/pip3"
+
+    echo_generate yq
     check_bin yq
     yq shell-completion bash > "${BASH_COMPLETION_DIR}/yq"
-
-    echo "Generating kubectl krew completion"
-    check_bin yq
-    kubectl krew completion bash > "${BASH_COMPLETION_DIR}/kubectl-krew"
-
-    echo_info "Operation completed"
-    echo
 }
 
 main
