@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2155
+
+set -Eeuo pipefail
+
+# Arguments
+readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+readonly SCRIPT=$(basename "${0}")
+readonly TOOL="${1:-}"
+readonly ARGS=("${@:2}")
+
+# Settings
+readonly TOOLS_DIR="${DEV_DIR}/src/github.com/riccardopedrielli"
+readonly TOOL_PREFIX="dev-"
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <args>"
+    echo
+    echo "Arguments:"
+    echo "    list                       List the available dev tools"
+    echo "    <tool>                     Show the usage help of the tool"
+    echo "    <tool> <command> [args]    Run the tool passing the command and the arguments"
+
+    echo
+
+    exit 1
+}
+
+echo_info()
+{
+    echo -e "\e[0;36m${*}\e[0m"
+}
+
+echo_error()
+{
+    echo -e "\e[0;31m${*}\e[0m"
+}
+
+check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+list_tools()
+{
+    echo
+    echo_info "Available dev tools:"
+    echo
+
+    local TOOL_PATH
+    local TOOL_NAME
+
+    for TOOL_PATH in "${TOOLS_DIR}/${TOOL_PREFIX}"*; do
+        TOOL_NAME="${TOOL_PATH##*/}"
+        TOOL_NAME="${TOOL_NAME/${TOOL_PREFIX}/}"
+        echo "${TOOL_NAME}"
+    done
+
+    echo
+}
+
+run_tool()
+{
+    TOOL_SCRIPT="${TOOLS_DIR}/${TOOL_PREFIX}${TOOL}/servicectl.sh"
+
+    if [ ! -x "${TOOL_SCRIPT}" ]; then
+        echo_error "Error: invalid tool name \"${TOOL}\""
+        exit 1
+    fi
+
+    # shellcheck disable=2068
+    ${TOOL_SCRIPT} ${ARGS[@]}
+}
+
+main()
+{
+    check_bin docker
+
+    cd "${SCRIPT_DIR}"
+
+    case ${TOOL} in
+
+        ''|-h|--help)
+            print_usage
+            ;;
+
+        list)
+            list_tools
+            ;;
+
+        *)
+            run_tool
+            ;;
+
+    esac
+}
+
+main
