@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+trap 'echo_error Error: program exited with status ${?}' ERR
+
+echo_info()
+{
+    echo -e "\e[0;36m${*}\e[0m"
+}
+
+echo_error()
+{
+    echo -e "\e[0;31m${*}\e[0m"
+}
+
+check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+main()
+{
+    check_bin tflint
+    check_bin tfsec
+    check_bin terrascan
+    check_bin checkov
+
+    echo
+    echo_info "Run tflint"
+    echo
+
+    tflint
+
+    echo
+    echo_info "Run tfsec"
+    echo
+
+    tfsec --soft-fail --tfvars-file variables/test.tfvars --tfvars-file variables/prod.tfvars --exclude aws-vpc-no-public-ingress-sgr,aws-vpc-no-public-egress-sgr
+
+    echo
+    echo_info "Run terrascan"
+    echo
+
+    terrascan scan --iac-type terraform --verbose || true
+
+    echo
+    echo_info "Run checkov"
+    echo
+
+    checkov --quiet --compact --framework terraform --directory .
+}
+
+main
