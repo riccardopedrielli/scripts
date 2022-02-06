@@ -110,7 +110,7 @@ install_bin()
     local -r BIN_NAME="${1}"
     local -r URL="${2}"
 
-    curl -sSL "${URL}" -o "${BIN_DIR}/${BIN_NAME}"
+    curl -fsSL "${URL}" -o "${BIN_DIR}/${BIN_NAME}"
     chmod +x "${BIN_DIR}/${BIN_NAME}"
 }
 
@@ -135,7 +135,7 @@ install_archive()
             exit 1
     esac
 
-    curl -sSL "${URL}" -o "${ARCHIVE_PATH}"
+    curl -fsSL "${URL}" -o "${ARCHIVE_PATH}"
     # shellcheck disable=SC2068
     ${EXTRACT_CMD[@]}
     chmod +x "${BIN_DIR}/${BIN_NAME}"
