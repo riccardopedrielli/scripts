@@ -101,7 +101,8 @@ get_github_url()
     curl -fsSL "https://api.github.com/repos/${GITHUB_PATH}/releases/latest" | \
         jq -r .assets[].browser_download_url | \
         grep -iE "${OS}.*(${ARCH_1}|${ARCH_2}|${ARCH_3})" | \
-        grep -vE '\.asc$|\.sig$|\.deb$|\.rpm$'
+        grep -vE '\.asc$|\.sig$|\.deb$|\.rpm$' | \
+        grep -ve 'tfsec-checkgen'
 }
 
 install_bin()
