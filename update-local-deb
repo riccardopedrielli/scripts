@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+trap 'echo_error "\e[1mError: program exited with status ${?} at line ${LINENO}"' ERR
+trap 'rm -rf ${TEMP_DIR}' EXIT
+
+# Arguments
+# shellcheck disable=SC2155
+readonly SCRIPT=$(basename "${0}")
+
+# Settings
+readonly TEMP_DIR="/tmp/${SCRIPT}"
+readonly OS="linux"
+readonly ARCH="amd64"
+readonly DEBIAN_FRONTEND="noninteractive"
+
+export DEBIAN_FRONTEND
+
+echo_info()
+{
+    echo -e "\e[0;36m${*}\e[0m"
+}
+
+echo_error()
+{
+    echo -e "\e[0;31m${*}\e[0m"
+}
+
+check_bin()
+{
+    if ! command -v "${1}" &> /dev/null; then
+        echo_error "Error: \"${1}\" is required but not installed."
+        exit 1
+    fi
+}
+
+get_version()
+{
+    local -r PACKAGE_NAME="${1}"
+    local -r RAW_VERSION=$(dpkg -s "${PACKAGE_NAME}" 2> /dev/null || true)
+
+    echo "${RAW_VERSION}" | grep "Version" | cut -d ' ' -f 2 || true
+}
+
+print_version()
+{
+    local OLD_VERSION=${1:-}
+    local NEW_VERSION=${2:-}
+
+    if [ -z "${OLD_VERSION}" ]; then
+        OLD_VERSION="none"
+    fi
+
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="error getting the new version"
+    fi
+
+    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+        echo -e "Already at newest version: \e[0;32m${NEW_VERSION}\e[0m"
+    else
+        echo -e "Version updated: \e[0;33m${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
+    fi
+}
+
+install_deb()
+{
+    local -r URL="${1}"
+    local -r DEB_PATH="${TEMP_DIR}/package.deb"
+
+    curl -fsSL "${URL}" -o "${DEB_PATH}"
+    sudo dpkg -i "${DEB_PATH}" > /dev/null
+    rm -f "${DEB_PATH}"
+}
+
+install_github_deb()
+{
+    local -r PACKAGE_NAME="${1}"
+    local -r GITHUB_PATH="${2}"
+
+    local -r URL="$(curl -fsSL "https://api.github.com/repos/${GITHUB_PATH}/releases/latest" | \
+                        jq -r .assets[].browser_download_url | \
+                        grep -iE "${OS}.*${ARCH}.*\.deb")"
+
+    install_deb "${URL}"
+}
+
+install_binance()
+{
+    local -r URL="https://ftp.binance.com/electron-desktop/linux/production/binance-amd64-linux.deb"
+
+    install_deb "${URL}"
+}
+
+install_discord-ptb()
+{
+    local -r URL="https://discord.com/api/download/ptb?platform=linux&format=deb"
+
+    install_deb "${URL}"
+}
+
+install_lens()
+{
+    local -r RELEASE_JSON="$(curl -fsSL https://api.github.com/repos/lensapp/lens/releases/latest)"
+
+    local -r VERSION=$(echo "${RELEASE_JSON}" | jq -r .tag_name | sed 's/v//')
+    local -r DATE=$(echo "${RELEASE_JSON}" | jq -r .published_at | xargs -I _value_ date -d'_value_' +%Y%m%d)
+
+    local -r URL="https://api.k8slens.dev/binaries/Lens-${VERSION}-latest.${DATE}.1.amd64.deb"
+
+    install_deb "${URL}"
+}
+
+install_mongodb-compass()
+{
+    local -r URL=$(curl -fsSL https://www.mongodb.com/try/download/compass | \
+                    grep -oE 'https://downloads.mongodb.com/compass/mongodb-compass_[0-9]\.[0-9]{1,2}\.[0-9]{1,2}_amd64\.deb' | \
+                    head -n 1)
+
+    install_deb "${URL}"
+}
+
+install_smartgit()
+{
+    local -r URL_PATH="$(curl -fsSL https://www.syntevo.com/smartgit/download/ | \
+                            grep -oE '/downloads/smartgit/smartgit-[0-9]{2}_[0-9]{1,2}_[0-9]{1,2}\.deb')"
+
+    local -r URL="https://www.syntevo.com/${URL_PATH}"
+
+    install_deb "${URL}"
+}
+
+install_synology-drive()
+{
+    local -r VERSION=$(curl -fsSL https://www.synology.com/it-it/releaseNote/SynologyDriveClient | \
+                        grep Version | \
+                        head -n 1 | \
+                        sed -e 's|\s*<h4>Version: ||' -e 's|</h4>||' )
+
+    local -r BUILD=$(echo "${VERSION}" | cut -d '-' -f 2)
+
+    local -r URL="https://global.download.synology.com/download/Utility/SynologyDriveClient/${VERSION}/Ubuntu/Installer/x86_64/synology-drive-client-${BUILD}.x86_64.deb"
+
+    install_deb "${URL}"
+}
+
+install_app()
+{
+    local -r PACKAGE_NAME="${1}"
+    local -r INSTALL_FROM="${2}"
+    local -r GITHUB_PATH="${3}"
+
+    echo
+    echo "Installing ${PACKAGE_NAME}"
+
+    local -r OLD_VERSION="$(get_version "${PACKAGE_NAME}")"
+
+    if [ "${INSTALL_FROM}" = "github" ]; then
+        install_github_deb "${PACKAGE_NAME}" "${GITHUB_PATH}"
+    elif [ "${INSTALL_FROM}" = "url" ]; then
+        # shellcheck disable=SC2086
+        install_${PACKAGE_NAME}
+    else
+        echo_error "Error: install source not supported: ${INSTALL_FROM}"
+        exit 1
+    fi
+
+    local -r NEW_VERSION="$(get_version "${PACKAGE_NAME}")"
+
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
+}
+
+main()
+{
+    check_bin curl
+    check_bin grep
+    check_bin jq
+
+    if [ -d "${TEMP_DIR}" ]; then
+        rm -rf "${TEMP_DIR}"
+    fi
+
+    mkdir -p "${TEMP_DIR}"
+
+    sudo -v
+
+    echo
+    echo_info "Installing packages"
+
+    # Arguments  "package"          "from"    "github path"
+    install_app  "binance"          "url"     ""
+    install_app  "discord-ptb"      "url"     ""
+    install_app  "grype"            "github"  "anchore/grype"
+    install_app  "lens"             "url"     ""
+    install_app  "mongodb-compass"  "url"     ""
+    install_app  "smartgit"         "url"     ""
+    install_app  "syft"             "github"  "anchore/syft"
+    install_app  "synology-drive"   "url"     ""
+
+    echo
+    echo_info "Update completed"
+    echo
+}
+
+main
