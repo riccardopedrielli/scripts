@@ -69,7 +69,7 @@ get_version()
     )"
 
     echo "${RAW_VERSION}" \
-        | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)' \
+        | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(\.(0|[1-9][[:digit:]]*))?' \
         | head -n 1 \
         || true
 }
