@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2155
-
 set -Eeuo pipefail
-trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
-
-# Arguments
-readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+trap 'echo_error "\e[1mError: program exited with status ${?} at line ${LINENO}"' ERR
 
 # Settings
 readonly TEMP_DIR="/tmp"
@@ -24,28 +19,6 @@ echo_error()
     echo -e "\e[0;31m${*}\e[0m"
 }
 
-print_error()
-{
-    local -r SOURCE_PATH="${1}"
-    local -r LINE_NUMBER="${2}"
-    local -r EXIT_STATUS="${3}"
-    local -r CONTEXT_LINES="3"
-    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
-
-    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
-    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
-
-    echo
-    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
-
-    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
-    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo
-
-    exit 1
-}
-
 check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
@@ -56,20 +29,21 @@ check_bin()
 
 print_version()
 {
-    local -r BIN="aws"
+    local OLD_VERSION=${1:-}
+    local NEW_VERSION=${2:-}
 
-    if [ -z "${AWS_VERSION_OLD}" ]; then
-        AWS_VERSION_OLD="None"
+    if [ -z "${OLD_VERSION}" ]; then
+        OLD_VERSION="none"
     fi
 
-    if [ -z "${AWS_VERSION_NEW}" ]; then
-        AWS_VERSION_NEW="Error getting the new version"
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="error getting the new version"
     fi
 
-    if [ "${AWS_VERSION_OLD}" = "${AWS_VERSION_NEW}" ]; then
-        echo "${BIN}: ${AWS_VERSION_NEW}"
+    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+        echo -e "Already at newest version: \e[0;32m${NEW_VERSION}\e[0m"
     else
-        echo -e "\e[0;33m${BIN}: ${AWS_VERSION_OLD} -> ${AWS_VERSION_NEW}\e[0m"
+        echo -e "Version updated: \e[0;33m${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
     fi
 }
 
@@ -79,10 +53,12 @@ main()
     check_bin curl
     check_bin unzip
 
-    echo
-    echo_info "Updating aws cli"
+    sudo -v
 
-    AWS_VERSION_OLD="$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)"
+    echo
+    echo_info "Installing aws cli"
+
+    local -r OLD_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
     curl -sSL "${APP_URL}" -o "${TEMP_DIR}/${APP}.zip"
 
@@ -95,23 +71,24 @@ main()
 
     rm -rf "${TEMP_DIR:?}/${APP}"
 
-    AWS_VERSION_NEW="$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)"
-
-    echo_info "Purging old versions"
+    local -r NEW_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
     pushd "${INSTALL_DIR}/aws-cli/v2" > /dev/null || exit 1
 
-    readonly CURRENT_VERSION=$(basename "$(readlink -f current)")
+    local CURRENT_VERSION
+    CURRENT_VERSION=$(basename "$(readlink -f current)")
+    readonly CURRENT_VERSION
 
     for INSTALLED_VERSION in *; do
         if [[ "${INSTALLED_VERSION}" != "current" && "${INSTALLED_VERSION}" != "${CURRENT_VERSION}" ]]; then
+            echo "Removing ${INSTALLED_VERSION}"
             sudo rm -rf "${INSTALLED_VERSION}"
         fi
     done
 
     popd > /dev/null || exit 1
 
-    print_version
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
 }
 
 main

@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2155
-
 set -Eeuo pipefail
-trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
+trap 'echo_error "\e[1mError: program exited with status ${?} at line ${LINENO}"' ERR
 trap 'print_report' EXIT
-
-# Arguments
-readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 
 # Settings
 readonly TOOLS_DIR="${HOME}/dev/tools"
@@ -21,28 +16,6 @@ echo_info()
 echo_error()
 {
     echo -e "\e[0;31m${*}\e[0m"
-}
-
-print_error()
-{
-    local -r SOURCE_PATH="${1}"
-    local -r LINE_NUMBER="${2}"
-    local -r EXIT_STATUS="${3}"
-    local -r CONTEXT_LINES="3"
-    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
-
-    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
-    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
-
-    echo
-    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
-
-    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
-    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo
-
-    exit 1
 }
 
 check_bin()

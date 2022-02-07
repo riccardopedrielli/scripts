@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2155
-
 set -Eeuo pipefail
-trap 'print_error ${BASH_SOURCE[0]} ${LINENO} ${?}' ERR
+trap 'echo_error "\e[1mError: program exited with status ${?} at line ${LINENO}"' ERR
 trap 'rm -rf ${TEMP_DIR}' EXIT
-
-# Arguments
-readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
-readonly TEMP_DIR="/tmp/${SCRIPT}"
+readonly TEMP_DIR="/tmp/update-local-bin"
 readonly OS="linux"
 readonly ARCH_1="amd64"
 readonly ARCH_2="x86_64"
@@ -26,28 +20,6 @@ echo_info()
 echo_error()
 {
     echo -e "\e[0;31m${*}\e[0m"
-}
-
-print_error()
-{
-    local -r SOURCE_PATH="${1}"
-    local -r LINE_NUMBER="${2}"
-    local -r EXIT_STATUS="${3}"
-    local -r CONTEXT_LINES="3"
-    local -r SOURCE_CODE="$(pr -tn "${SOURCE_PATH}")"
-
-    local RELATIVE_PATH="${SOURCE_PATH#"${SCRIPT_DIR}"}"
-    local -r RELATIVE_PATH="${RELATIVE_PATH#/}"
-
-    echo
-    echo_error "\e[1mError: command exited with status ${EXIT_STATUS} at ${RELATIVE_PATH}:${LINE_NUMBER}"
-
-    tail -n +$((LINE_NUMBER - CONTEXT_LINES)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo_error "\e[1m$(tail -n +$((LINE_NUMBER)) <<< "${SOURCE_CODE}" | head -n 1)"
-    tail -n +$((LINE_NUMBER + 1)) <<< "${SOURCE_CODE}" | head -n ${CONTEXT_LINES}
-    echo
-
-    exit 1
 }
 
 check_bin()
@@ -131,7 +103,7 @@ install_archive()
             local -r EXTRACT_CMD=(tar xzf "${ARCHIVE_PATH}" -C "${BIN_DIR}" "${ARCHIVE_BIN_PATH}" --transform 's|.*/||')
             ;;
         *)
-            print_error "Error: invalid archive type: ${ARCHIVE_TYPE}"
+            echo_error "Error: invalid archive type: ${ARCHIVE_TYPE}"
             exit 1
     esac
 
@@ -156,7 +128,7 @@ install_github_bin()
     local -r BIN_NAME="${1}"
     local -r GITHUB_PATH="${2}"
 
-    local -r DOWNLOAD_URL="$(get_github_url "${GITHUB_PATH}")"
+    local -r DOWNLOAD_URL=$(get_github_url "${GITHUB_PATH}")
 
     install_bin "${BIN_NAME}" "${DOWNLOAD_URL}"
 }
@@ -167,7 +139,7 @@ install_github_zip()
     local -r GITHUB_PATH="${2}"
     local -r ARCHIVE_BIN_PATH="${3}"
 
-    local -r DOWNLOAD_URL="$(get_github_url "${GITHUB_PATH}")"
+    local -r DOWNLOAD_URL=$(get_github_url "${GITHUB_PATH}")
 
     install_archive "zip" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
 }
@@ -178,7 +150,7 @@ install_github_targz()
     local -r GITHUB_PATH="${2}"
     local -r ARCHIVE_BIN_PATH="${3}"
 
-    local -r DOWNLOAD_URL="$(get_github_url "${GITHUB_PATH}")"
+    local -r DOWNLOAD_URL=$(get_github_url "${GITHUB_PATH}")
 
     install_archive "tar.gz" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
 }
@@ -193,12 +165,12 @@ install_app()
     echo
     echo "Installing ${BIN_NAME}"
 
-    local -r OLD_VERSION="$(get_version "${BIN_NAME}")"
+    local -r OLD_VERSION=$(get_version "${BIN_NAME}")
 
     # shellcheck disable=SC2086
     install_${INSTALL_TYPE} "${BIN_NAME}" "${URL}" "${ARCHIVE_BIN_PATH}"
 
-    local -r NEW_VERSION="$(get_version "${BIN_NAME}")"
+    local -r NEW_VERSION=$(get_version "${BIN_NAME}")
 
     print_version "${OLD_VERSION}" "${NEW_VERSION}"
 }
