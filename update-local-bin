@@ -225,6 +225,8 @@ main()
     echo
     echo_info "Installing binaries"
 
+    local -r NCDU_URL="https://dev.yorhel.nl/download/ncdu-2.0-linux-x86_64.tar.gz"
+
     # Arguments  "binary"     "install type"   "github path or url"        "binary path in archive"
     install_app  "ctop"       "github_bin"     "bcicen/ctop"               ""
     install_app  "driftctl"   "github_bin"     "cloudskiff/driftctl"       ""
@@ -232,6 +234,7 @@ main()
     install_app  "terrascan"  "github_targz"   "accurics/terrascan"        "terrascan"
     install_app  "tflint"     "github_zip"     "terraform-linters/tflint"  "tflint"
     install_app  "tfsec"      "github_bin"     "aquasecurity/tfsec"        ""
+    install_app  "ncdu"       "url_targz"      "${NCDU_URL}"               "ncdu"
 
     echo
     echo_info "Update completed"
