@@ -142,6 +142,15 @@ install_archive()
     rm -f "${ARCHIVE_PATH}"
 }
 
+install_url_targz()
+{
+    local -r BIN_NAME="${1}"
+    local -r DOWNLOAD_URL="${2}"
+    local -r ARCHIVE_BIN_PATH="${3}"
+
+    install_archive "tar.gz" "${BIN_NAME}" "${DOWNLOAD_URL}" "${ARCHIVE_BIN_PATH}"
+}
+
 install_github_bin()
 {
     local -r BIN_NAME="${1}"
