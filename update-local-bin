@@ -198,6 +198,7 @@ main()
 {
     check_bin curl
     check_bin grep
+    check_bin gzip
     check_bin jq
     check_bin tar
     check_bin unzip
