@@ -36,11 +36,6 @@ main()
     check_bin helm
     helm completion bash > "${BASH_COMPLETION_DIR}/helm"
 
-    echo_generate jfrog
-    check_bin jfrog
-    export JFROG_CLI_HOME_DIR="${BASH_COMPLETION_DIR}"
-    jfrog completion bash > /dev/null
-
     echo_generate kubectl
     check_bin kubectl
     kubectl completion bash > "${BASH_COMPLETION_DIR}/kubectl"
