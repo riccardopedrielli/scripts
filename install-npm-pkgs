@@ -48,7 +48,7 @@ echo_error()
 check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
-        echo -e "\e[0;31mError: \"${1}\" is required but not installed.\e[0m"
+        echo_error "Error: \"${1}\" is required but not installed."
         exit 1
     fi
 }
