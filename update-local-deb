@@ -94,6 +94,13 @@ install_discord-ptb()
     install_deb "${URL}"
 }
 
+install_gitkraken()
+{
+    local -r URL="https://release.axocdn.com/linux/gitkraken-amd64.deb"
+
+    install_deb "${URL}"
+}
+
 install_lens()
 {
     local -r RELEASE_JSON="$(curl -fsSL https://api.github.com/repos/lensapp/lens/releases/latest)"
@@ -185,6 +192,7 @@ main()
     # Arguments  "package"          "from"    "github path"
     install_app  "binance"          "url"     ""
     install_app  "discord-ptb"      "url"     ""
+    install_app  "gitkraken"        "url"     ""
     install_app  "grype"            "github"  "anchore/grype"
     install_app  "lens"             "url"     ""
     install_app  "mongodb-compass"  "url"     ""
