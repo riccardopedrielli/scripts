@@ -143,6 +143,8 @@ install_synology-drive()
     local -r URL="https://global.download.synology.com/download/Utility/SynologyDriveClient/${VERSION}/Ubuntu/Installer/x86_64/synology-drive-client-${BUILD}.x86_64.deb"
 
     install_deb "${URL}"
+
+    synology-drive autostart &> /dev/null
 }
 
 install_app()
