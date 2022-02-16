@@ -198,6 +198,7 @@ main()
     install_app  "grype"            "github"  "anchore/grype"
     install_app  "lens"             "url"     ""
     install_app  "mongodb-compass"  "url"     ""
+    install_app  "powershell"       "github"  "PowerShell/PowerShell"
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
     install_app  "synology-drive"   "url"     ""
