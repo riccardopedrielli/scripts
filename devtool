@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2155
-
 set -Eeuo pipefail
 
 # Arguments
+# shellcheck disable=SC2155
 readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+# shellcheck disable=SC2155
 readonly SCRIPT=$(basename "${0}")
 readonly TOOL="${1:-}"
 readonly ARGS=("${@:2}")
@@ -20,9 +20,9 @@ print_usage()
     echo "Usage: ${SCRIPT} <args>"
     echo
     echo "Arguments:"
-    echo "    list                       List the available dev tools"
-    echo "    <tool>                     Show the usage help of the tool"
-    echo "    <tool> <command> [args]    Run the tool passing the command and the arguments"
+    echo "    list                       List the available dev tools."
+    echo "    <tool>                     Show the usage help of the tool control script."
+    echo "    <tool> <command> [args]    Run the tool control script passing the command and the arguments."
 
     echo
 
@@ -67,10 +67,10 @@ list_tools()
 
 run_tool()
 {
-    TOOL_SCRIPT="${TOOLS_DIR}/${TOOL_PREFIX}${TOOL}/servicectl.sh"
+    local -r TOOL_SCRIPT="${TOOLS_DIR}/${TOOL_PREFIX}${TOOL}/servicectl.sh"
 
     if [ ! -x "${TOOL_SCRIPT}" ]; then
-        echo_error "Error: invalid tool name \"${TOOL}\""
+        echo_error "Error: invalid tool name \"${TOOL}\"."
         exit 1
     fi
 
