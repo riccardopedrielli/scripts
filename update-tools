@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
-trap 'echo_error "\e[1mError: program exited with status ${?} at line ${LINENO}"' ERR
+set -Eeu
+trap 'echo "Error: ${SCRIPT} - Function: ${FUNCNAME:-global context} - Line: ${LINENO} - Status: ${?}"' ERR
 trap 'print_report' EXIT
+
+# Arguments
+# shellcheck disable=SC2155
+readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly TOOLS_DIR="${HOME}/dev/tools"
@@ -86,9 +90,11 @@ main()
 
     # Install go
     echo "Installing go"
+    # shellcheck disable=SC2155
     readonly GO_VERSION_OLD="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
     local -r GO_VERSION_LATEST="$(curl -sSL "https://golang.org/VERSION?m=text")"
     install_targz "https://dl.google.com/go/${GO_VERSION_LATEST}.linux-amd64.tar.gz" "go" "go"
+    # shellcheck disable=SC2155
     readonly GO_VERSION_NEW="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
 
     # Report

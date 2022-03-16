@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -Eeu
+trap 'echo "Error: ${SCRIPT} - Function: ${FUNCNAME:-global context} - Line: ${LINENO} - Status: ${?}"' ERR
 
 # Arguments
-# shellcheck disable=SC2155
-readonly SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
 # shellcheck disable=SC2155
 readonly SCRIPT=$(basename "${0}")
 readonly TOOL="${1:-}"
@@ -82,7 +81,7 @@ main()
 {
     check_bin docker
 
-    cd "${SCRIPT_DIR}"
+    cd "$(dirname "${0}")"
 
     case ${TOOL} in
 

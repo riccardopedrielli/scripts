@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2046
-sudo apt autoremove --purge $(dpkg -l | grep "^rc" | awk "{print $2}")
+set -Eeu
+trap 'echo "Error: ${SCRIPT} - Function: ${FUNCNAME:-global context} - Line: ${LINENO} - Status: ${?}"' ERR
 
-snap list --all | awk '/disabled/{print $1, $3}' |
-    while read -r SNAP_NAME REVISION; do
-        sudo snap remove "${SNAP_NAME}" --revision="${REVISION}"
-    done
+# Arguments
+# shellcheck disable=SC2155
+readonly SCRIPT=$(basename "${0}")
 
-flatpak uninstall --unused --delete-data --assumeyes
+main()
+{
+    # shellcheck disable=SC2046
+    sudo apt autoremove --purge $(dpkg -l | grep '^rc' | awk '{print $2}')
+
+    snap list --all | awk '/disabled/{print $1, $3}' |
+        while read -r SNAP_NAME REVISION; do
+            sudo snap remove "${SNAP_NAME}" --revision="${REVISION}"
+        done
+
+    flatpak uninstall --unused --delete-data --assumeyes
+}
+
+main
