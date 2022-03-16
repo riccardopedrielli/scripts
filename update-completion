@@ -36,6 +36,10 @@ main()
 
     rm -rf "${BASH_COMPLETION_DIR:?}"/*
 
+    echo_generate binenv
+    check_bin binenv
+    binenv completion bash > "${BASH_COMPLETION_DIR}/binenv"
+
     echo_generate helm
     check_bin helm
     helm completion bash > "${BASH_COMPLETION_DIR}/helm"
