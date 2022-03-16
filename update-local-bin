@@ -10,7 +10,7 @@ readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly BIN_DIR="${HOME}/dev/bin"
-readonly TEMP_DIR="/tmp/update-local-bin"
+readonly TEMP_DIR="/tmp/${SCRIPT}"
 readonly OS="linux"
 readonly ARCH_1="amd64"
 readonly ARCH_2="x86_64"
@@ -165,8 +165,7 @@ install_app()
     local -r URL="${3}"
     local -r ARCHIVE_BIN_PATH="${4}"
 
-    echo
-    echo "Installing ${BIN_NAME}"
+    echo "Install ${BIN_NAME}"
 
     local -r OLD_VERSION=$(get_version "${BIN_NAME}")
 
@@ -176,6 +175,7 @@ install_app()
     local -r NEW_VERSION=$(get_version "${BIN_NAME}")
 
     print_version "${OLD_VERSION}" "${NEW_VERSION}"
+    echo
 }
 
 main()
@@ -197,12 +197,9 @@ main()
 
     mkdir -p "${TEMP_DIR}"
 
-    echo
-    echo_info "Installing binaries"
+    local -r NCDU_URL="https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz"
 
-    local -r NCDU_URL="https://dev.yorhel.nl/download/ncdu-2.0-linux-x86_64.tar.gz"
-
-    # Arguments  "binary"     "install type"   "github path or url"        "binary path in archive"
+    # Arguments  "binary"     "install type"   "github path or url"        "path in archive"
     install_app  "ctop"       "github_bin"     "bcicen/ctop"               ""
     install_app  "driftctl"   "github_bin"     "cloudskiff/driftctl"       ""
     install_app  "gitui"      "github_targz"   "extrawurst/gitui"          "./gitui"
@@ -211,10 +208,6 @@ main()
     install_app  "tflint"     "github_zip"     "terraform-linters/tflint"  "tflint"
     install_app  "tfsec"      "github_bin"     "aquasecurity/tfsec"        ""
     install_app  "ncdu"       "url_targz"      "${NCDU_URL}"               "ncdu"
-
-    echo
-    echo_info "Update completed"
-    echo
 }
 
 main

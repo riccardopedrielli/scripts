@@ -9,17 +9,12 @@ trap 'rm -rf ${TEMP_DIR}' EXIT
 readonly SCRIPT=$(basename "${0}")
 
 # Settings
-readonly TEMP_DIR="/tmp/update-local-deb"
+readonly TEMP_DIR="/tmp/${SCRIPT}"
 readonly ARCH="amd64"
 readonly DEB_EXCLUDE_LIST="lts"
 readonly DEBIAN_FRONTEND="noninteractive"
 
 export DEBIAN_FRONTEND
-
-echo_info()
-{
-    echo -e "\e[0;36m${*}\e[0m"
-}
 
 echo_error()
 {
@@ -158,8 +153,7 @@ install_app()
     local -r INSTALL_FROM="${2}"
     local -r GITHUB_PATH="${3}"
 
-    echo
-    echo "Installing ${PACKAGE_NAME}"
+    echo "Install ${PACKAGE_NAME}"
 
     local -r OLD_VERSION="$(get_version "${PACKAGE_NAME}")"
 
@@ -176,6 +170,7 @@ install_app()
     local -r NEW_VERSION="$(get_version "${PACKAGE_NAME}")"
 
     print_version "${OLD_VERSION}" "${NEW_VERSION}"
+    echo
 }
 
 main()
@@ -192,9 +187,6 @@ main()
 
     sudo -v
 
-    echo
-    echo_info "Installing packages"
-
     # Arguments  "package"          "from"    "github path"
     install_app  "binance"          "url"     ""
     install_app  "discord-ptb"      "url"     ""
@@ -206,10 +198,6 @@ main()
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
     install_app  "synology-drive"   "url"     ""
-
-    echo
-    echo_info "Update completed"
-    echo
 }
 
 main

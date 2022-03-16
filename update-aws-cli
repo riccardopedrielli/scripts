@@ -13,11 +13,6 @@ readonly INSTALL_DIR="/usr/local"
 readonly APP_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
 readonly APP="aws"
 
-echo_info()
-{
-    echo -e "\e[0;36m${*}\e[0m"
-}
-
 echo_error()
 {
     echo -e "\e[0;31m${*}\e[0m"
@@ -59,8 +54,7 @@ main()
 
     sudo -v
 
-    echo
-    echo_info "Installing aws cli"
+    echo "Installi aws cli"
 
     local -r OLD_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
@@ -77,22 +71,22 @@ main()
 
     local -r NEW_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
+
     pushd "${INSTALL_DIR}/aws-cli/v2" > /dev/null || exit 1
 
-    local CURRENT_VERSION
-    CURRENT_VERSION=$(basename "$(readlink -f current)")
-    readonly CURRENT_VERSION
+    local -r CURRENT_VERSION=$(basename "$(readlink -f current)")
 
     for INSTALLED_VERSION in *; do
         if [[ "${INSTALLED_VERSION}" != "current" && "${INSTALLED_VERSION}" != "${CURRENT_VERSION}" ]]; then
-            echo "Removing ${INSTALLED_VERSION}"
+            echo "Remove ${INSTALLED_VERSION}"
             sudo rm -rf "${INSTALLED_VERSION}"
         fi
     done
 
     popd > /dev/null || exit 1
 
-    print_version "${OLD_VERSION}" "${NEW_VERSION}"
+    echo
 }
 
 main

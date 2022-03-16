@@ -23,7 +23,7 @@ check_bin()
 get_version()
 {
     local -r BIN_PATH="${1}"
-    local -r RAW_VERSION="$("${BIN_PATH}" version 2> /dev/null || true)"
+    local -r RAW_VERSION="$(${BIN_PATH} version 2> /dev/null || true)"
 
     echo "${RAW_VERSION}" \
         | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)' \
@@ -65,8 +65,18 @@ install_app()
         mkdir -p "${DESTINATION_DIR}"
     fi
 
+
+    echo "Install ${BIN_NAME}"
+
+    local -r OLD_VERSION=$(get_version "${BIN_PATH}")
+
     curl -sSL "${URL}" -o "${BIN_PATH}"
     chmod +x "${BIN_PATH}"
+
+    local -r NEW_VERSION=$(get_version "${BIN_PATH}")
+
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
+    echo
 }
 
 main()
@@ -74,19 +84,9 @@ main()
     check_bin curl
     check_bin grep
 
-    echo
-    echo "Installing docker-compose and docker-compose-switch"
-
-    local -r OLD_VERSION="$(get_version docker-compose)"
-
-    # Arguments  "binary name"     "destination directory"        "github path"            "github binary name"
+    # Arguments  "binary"          "destination directory"        "github path"            "github binary name"
     install_app  "docker-compose"  "${HOME}/.docker/cli-plugins"  "docker/compose"         "docker-compose-linux-x86_64"
     install_app  "docker-compose"  "${HOME}/dev/bin"              "docker/compose-switch"  "docker-compose-linux-amd64"
-
-    local -r NEW_VERSION="$(get_version docker-compose)"
-
-    print_version "${OLD_VERSION}" "${NEW_VERSION}"
-    echo
 }
 
 main

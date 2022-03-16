@@ -2,7 +2,7 @@
 
 set -Eeu
 trap 'echo "Error: ${SCRIPT} - Function: ${FUNCNAME:-global context} - Line: ${LINENO} - Status: ${?}"' ERR
-trap 'print_report' EXIT
+trap 'rm -rf ${TEMP_DIR}' EXIT
 
 # Arguments
 # shellcheck disable=SC2155
@@ -10,12 +10,7 @@ readonly SCRIPT=$(basename "${0}")
 
 # Settings
 readonly TOOLS_DIR="${HOME}/dev/tools"
-readonly TEMP_DIR="/tmp"
-
-echo_info()
-{
-    echo -e "\e[0;36m${*}\e[0m"
-}
+readonly TEMP_DIR="/tmp/${SCRIPT}"
 
 echo_error()
 {
@@ -30,76 +25,102 @@ check_bin()
     fi
 }
 
+get_version()
+{
+    local -r BIN_NAME="${1}"
+    local -r RAW_VERSION=$(
+        ${BIN_NAME} -v 2> /dev/null ||
+        ${BIN_NAME} version 2> /dev/null ||
+        ${BIN_NAME} --version 2> /dev/null ||
+        true
+    )
+
+    echo "${RAW_VERSION}" \
+        | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(\.(0|[1-9][[:digit:]]*))?' \
+        | head -n 1 \
+        || true
+}
+
+print_version()
+{
+    local OLD_VERSION=${1:-}
+    local NEW_VERSION=${2:-}
+
+    if [ -z "${OLD_VERSION}" ]; then
+        OLD_VERSION="none"
+    fi
+
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="error getting the new version"
+    fi
+
+    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+        echo -e "Already at newest version: \e[0;32m${NEW_VERSION}\e[0m"
+    else
+        echo -e "Version updated: \e[0;33m${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
+    fi
+}
+
 install_targz()
 {
-    local -r URL="${1}"
-    local -r TOOL_TAR_PATH="${2}"
-    local -r TOOL_NAME="${3}"
+    local -r TOOL_NAME="${1}"
+    local -r URL="${2}"
+    local -r ARCHIVE_PATH="${3}"
 
     curl -sSL "${URL}" -o "${TEMP_DIR}/${TOOL_NAME}.tar.gz"
     rm -rf "${TEMP_DIR:?}/${TOOL_NAME}"
     mkdir -p "${TEMP_DIR}/${TOOL_NAME}"
     tar xzf "${TEMP_DIR}/${TOOL_NAME}.tar.gz" -C "${TEMP_DIR}/${TOOL_NAME}"
     rm -rf "${TOOLS_DIR:?}/${TOOL_NAME}"
-    mv -f "${TEMP_DIR}/${TOOL_NAME}/${TOOL_TAR_PATH}" "${TOOLS_DIR}/${TOOL_NAME}"
+    mv -f "${TEMP_DIR}/${TOOL_NAME}/${ARCHIVE_PATH}" "${TOOLS_DIR}/${TOOL_NAME}"
     chmod +x "${TOOLS_DIR}/${TOOL_NAME}"
     rm -rf "${TEMP_DIR:?}/${TOOL_NAME}"
     rm -f "${TEMP_DIR}/${TOOL_NAME}.tar.gz"
 }
 
-print_version()
+install_app()
 {
-    local -r BIN=${1}
-    local OLD_VERSION=${2}
-    local NEW_VERSION=${3}
+    local -r TOOL_NAME="${1}"
+    local -r INSTALL_TYPE="${2}"
+    local -r URL="${3}"
+    local -r ARCHIVE_BIN_PATH="${4}"
 
-    if [ -z "${OLD_VERSION}" ]; then
-        OLD_VERSION="None"
-    fi
+    echo "Install ${TOOL_NAME}"
 
-    if [ -z "${NEW_VERSION}" ]; then
-        NEW_VERSION="Error getting the new version"
-    fi
+    local -r OLD_VERSION=$(get_version "${TOOL_NAME}")
 
-    if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
-        echo "${BIN}: ${NEW_VERSION}"
-    else
-        echo -e "\e[0;33m${BIN}: ${OLD_VERSION} -> ${NEW_VERSION}\e[0m"
-    fi
-}
+    # shellcheck disable=SC2086
+    install_${INSTALL_TYPE} "${TOOL_NAME}" "${URL}" "${ARCHIVE_BIN_PATH}"
 
-print_report()
-{
-    {
-        print_version "go" "${GO_VERSION_OLD}" "${GO_VERSION_NEW}"
-    } | column -t -s ' '
+    local -r NEW_VERSION=$(get_version "${TOOL_NAME}")
+
+    print_version "${OLD_VERSION}" "${NEW_VERSION}"
     echo
 }
 
 main()
 {
     check_bin curl
+    check_bin grep
+    check_bin gzip
     check_bin tar
 
     if [ ! -d "${TOOLS_DIR}" ]; then
         mkdir -p "${TOOLS_DIR}"
     fi
 
-    echo
-    echo_info "Installing tools"
+    if [ -d "${TEMP_DIR}" ]; then
+        rm -rf "${TEMP_DIR}"
+    fi
 
-    # Install go
-    echo "Installing go"
-    # shellcheck disable=SC2155
-    readonly GO_VERSION_OLD="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
+    mkdir -p "${TEMP_DIR}"
+
     local -r GO_VERSION_LATEST="$(curl -sSL "https://golang.org/VERSION?m=text")"
-    install_targz "https://dl.google.com/go/${GO_VERSION_LATEST}.linux-amd64.tar.gz" "go" "go"
-    # shellcheck disable=SC2155
-    readonly GO_VERSION_NEW="$(go version 2> /dev/null | cut -d ' ' -f 3 | sed 's/go//')"
+    local -r GO_URL="https://dl.google.com/go/${GO_VERSION_LATEST}.linux-amd64.tar.gz"
 
-    # Report
-    echo
-    echo_info "Update completed"
+
+    # Arguments  "binary"  "install type"  "url"        "path in archive"
+    install_app  "go"      "targz"         "${GO_URL}"  "go"
 }
 
 main
