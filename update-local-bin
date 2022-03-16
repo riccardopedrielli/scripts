@@ -14,12 +14,8 @@ readonly TEMP_DIR="/tmp/update-local-bin"
 readonly OS="linux"
 readonly ARCH_1="amd64"
 readonly ARCH_2="x86_64"
-readonly ARCH_3="musl"
-
-echo_info()
-{
-    echo -e "\e[0;36m${*}\e[0m"
-}
+readonly ARCH_3="64bit"
+readonly ARCH_4="musl"
 
 echo_error()
 {
@@ -37,12 +33,12 @@ check_bin()
 get_version()
 {
     local -r BIN_NAME="${1}"
-    local -r RAW_VERSION="$(
-        ${BIN_NAME} -v 2> /dev/null || \
-        ${BIN_NAME} version 2> /dev/null || \
-        ${BIN_NAME} --version 2> /dev/null || \
+    local -r RAW_VERSION=$(
+        ${BIN_NAME} -v 2> /dev/null ||
+        ${BIN_NAME} version 2> /dev/null ||
+        ${BIN_NAME} --version 2> /dev/null ||
         true
-    )"
+    )
 
     echo "${RAW_VERSION}" \
         | grep -oE '(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(\.(0|[1-9][[:digit:]]*))?' \
@@ -74,11 +70,14 @@ get_github_url()
 {
     local -r GITHUB_PATH="${1}"
 
-    curl -fsSL "https://api.github.com/repos/${GITHUB_PATH}/releases/latest" | \
-        jq -r .assets[].browser_download_url | \
-        grep -iE "${OS}.*(${ARCH_1}|${ARCH_2}|${ARCH_3})" | \
-        grep -vE '\.asc$|\.sig$|\.deb$|\.rpm$' | \
-        grep -ve 'tfsec-checkgen'
+    local -r URL=$(curl -fsSL "https://api.github.com/repos/${GITHUB_PATH}/releases/latest" |
+        jq -r .assets[].browser_download_url |
+        grep -iE "${OS}.*(${ARCH_1}|${ARCH_2}|${ARCH_3}|${ARCH_4})" |
+        grep -vE '\.asc$|\.sig$|\.deb$|\.rpm$' |
+        grep -vE 'tfsec-checkgen|hugo_extended'
+    )
+
+    echo "${URL}"
 }
 
 install_bin()
@@ -207,6 +206,7 @@ main()
     install_app  "ctop"       "github_bin"     "bcicen/ctop"               ""
     install_app  "driftctl"   "github_bin"     "cloudskiff/driftctl"       ""
     install_app  "gitui"      "github_targz"   "extrawurst/gitui"          "./gitui"
+    install_app  "hugo"       "github_targz"   "gohugoio/hugo"             "hugo"
     install_app  "terrascan"  "github_targz"   "accurics/terrascan"        "terrascan"
     install_app  "tflint"     "github_zip"     "terraform-linters/tflint"  "tflint"
     install_app  "tfsec"      "github_bin"     "aquasecurity/tfsec"        ""
