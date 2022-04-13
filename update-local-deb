@@ -106,7 +106,7 @@ install_lens()
     local -r RELEASE_JSON="$(curl -fsSL https://api.github.com/repos/lensapp/lens/releases/latest)"
 
     local -r VERSION=$(echo "${RELEASE_JSON}" | jq -r .tag_name | sed 's/v//')
-    local -r DATE=$(echo "${RELEASE_JSON}" | jq -r .published_at | xargs -I _value_ date -d'_value_' +%Y%m%d)
+    local -r DATE=$(echo "${RELEASE_JSON}" | jq -r .published_at | xargs -I _value_ date --utc -d'_value_' +%Y%m%d)
 
     local -r URL="https://api.k8slens.dev/binaries/Lens-${VERSION}-latest.${DATE}.1.amd64.deb"
 
