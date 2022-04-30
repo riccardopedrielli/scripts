@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -Eeu
+trap 'echo "Error: ${SCRIPT} - Function: ${FUNCNAME:-global context} - Line: ${LINENO} - Status: ${?}"' ERR
+
+# Arguments
+# shellcheck disable=SC2155
+readonly SCRIPT=$(basename "${0}")
+readonly NAME="${1:-}"
+readonly COMMENT="${2:-}"
+
+# Settings
+readonly SSH_KEYS_DIR="${HOME}/dev/data/ssh"
+
+print_usage()
+{
+    echo
+    echo "Usage: ${SCRIPT} <name> [comment]"
+    echo
+    echo "Create ssh keys in ${SSH_KEYS_DIR}"
+    echo
+    echo "Arguments:"
+    echo "    name       The name of the generated files (public and private keys)."
+    echo "    comment    The comment in the public key. If omitted, the file name will be used."
+    echo
+
+    exit 1
+}
+
+echo_error()
+{
+    echo -e "\e[0;31m${*}\e[0m"
+}
+
+main()
+{
+    if [ -z "${NAME}" ]; then
+        echo_error "Error: name not specified."
+        print_usage
+    fi
+
+    if [ ! -d "${SSH_KEYS_DIR}" ]; then
+        mkdir -p "${SSH_KEYS_DIR}"
+    fi
+
+    ssh-keygen -t ed25519 -a 128 -C "${COMMENT:-$NAME}" -f "${SSH_KEYS_DIR}/${NAME}" -N ""
+}
+
+main
