@@ -54,26 +54,26 @@ main()
 
     sudo -v
 
-    echo "Installi aws cli"
+    echo "Installing ${APP} cli"
 
-    local -r OLD_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
+    local -r OLD_VERSION=$(${APP} --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
     curl -sSL "${APP_URL}" -o "${TEMP_DIR}/${APP}.zip"
 
-    unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}"
+    unzip -q -o "${TEMP_DIR}/${APP}.zip" -d "${TEMP_DIR}/${APP}"
     rm -f "${TEMP_DIR}/${APP}.zip"
 
-    sudo "${TEMP_DIR}/${APP}/install" --install-dir "${INSTALL_DIR}/aws-cli" \
+    sudo "${TEMP_DIR}/${APP}/aws/install" --install-dir "${INSTALL_DIR}/${APP}-cli" \
                                       --bin-dir "${INSTALL_DIR}/bin" \
                                       --update > /dev/null
 
     rm -rf "${TEMP_DIR:?}/${APP}"
 
-    local -r NEW_VERSION=$(aws --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
+    local -r NEW_VERSION=$(${APP} --version 2> /dev/null | sed 's|^[^/]*/\([^ ]*\) .*$|\1|' || true)
 
     print_version "${OLD_VERSION}" "${NEW_VERSION}"
 
-    pushd "${INSTALL_DIR}/aws-cli/v2" > /dev/null || exit 1
+    pushd "${INSTALL_DIR}/${APP}-cli/v2" > /dev/null || exit 1
 
     local -r CURRENT_VERSION=$(basename "$(readlink -f current)")
 
