@@ -58,6 +58,11 @@ main()
         fi
     fi
 
+    if [ -z "${AWS_VPC_ID}" ]; then
+        echo_error "Missing argument vpc_id"
+        exit 1
+    fi
+
     get_objects internet-gateways       "filters" "Name=attachment.vpc-id,Values=${AWS_VPC_ID}"         "InternetGatewayId"
     get_objects subnets                 "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "SubnetId"
     get_objects route-tables            "filters" "Name=vpc-id,Values=${AWS_VPC_ID}"                    "RouteTableId"
