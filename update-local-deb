@@ -142,7 +142,7 @@ install_smartgit()
 install_synology-drive()
 {
     local -r VERSION=$(curl -fsSL https://www.synology.com/it-it/releaseNote/SynologyDriveClient | \
-                        grep -oE '[0-9]+\.[0-9]+\.[0-9]+-[0-9]+' | \
+                        grep -oE '[0-9]\.[0-9]\.[0-9]-[0-9]+' | \
                         head -n 1)
 
     local -r BUILD=$(echo "${VERSION}" | cut -d '-' -f 2)
