@@ -108,7 +108,14 @@ install_lens()
     local -r VERSION=$(echo "${RELEASE_JSON}" | jq -r .tag_name | sed 's/v//')
     local -r DATE=$(echo "${RELEASE_JSON}" | jq -r .published_at | xargs -I _value_ date --utc -d'_value_' +%Y%m%d)
 
-    local -r URL="https://api.k8slens.dev/binaries/Lens-${VERSION}-latest.${DATE}.1.amd64.deb"
+    local -r URL1="https://api.k8slens.dev/binaries/Lens-${VERSION}-latest.${DATE}.1.amd64.deb"
+    local -r URL2="https://api.k8slens.dev/binaries/Lens-${VERSION}-latest.${DATE}.2.amd64.deb"
+
+    if curl -fsSL --output /dev/null --head "${URL1}" &> /dev/null; then
+        local -r URL="${URL1}"
+    elif curl -fsSL --output /dev/null --head "${URL2}" &> /dev/null; then
+        local -r URL="${URL2}"
+    fi
 
     install_deb "${URL}"
 }
