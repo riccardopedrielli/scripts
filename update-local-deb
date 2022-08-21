@@ -110,6 +110,13 @@ install_mongodb-compass()
     install_deb "${URL}"
 }
 
+install_notable()
+{
+    local -r URL="https://download.notable.app/?target=deb"
+
+    install_deb "${URL}"
+}
+
 install_smartgit()
 {
     local -r URL_PATH="$(curl -fsSL https://www.syntevo.com/smartgit/download/ | \
@@ -180,6 +187,7 @@ main()
     install_app  "discord-ptb"      "url"     ""
     install_app  "gitkraken"        "url"     ""
     install_app  "mongodb-compass"  "url"     ""
+    install_app  "notable"          "url"     ""
     install_app  "powershell"       "github"  "PowerShell/PowerShell"
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
