@@ -72,7 +72,6 @@ main()
     generate_completion "pip" "pip completion --bash"
     generate_completion "pip3" "pip3 completion --bash"
     generate_completion "procs" "procs --completion-out bash"
-    generate_completion "syft" "syft completion bash"
     generate_completion "telepresence" "telepresence completion bash"
     generate_completion "terraform-docs" "terraform-docs completion bash"
     generate_completion "updatecli" "updatecli completion bash"
