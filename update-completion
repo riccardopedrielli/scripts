@@ -10,22 +10,32 @@ readonly SCRIPT=$(basename "${0}")
 # Settings
 readonly BASH_COMPLETION_DIR="${HOME}/dev/data/bash/completion"
 
-echo_error()
+log_warning()
 {
-    echo -e "\e[0;31m${*}\e[0m"
+    echo -e "\e[0;33m${*}\e[0m"
 }
 
 check_bin()
 {
     if ! command -v "${1}" &> /dev/null; then
-        echo_error "Error: \"${1}\" is required but not installed."
-        exit 1
+        return 1
+    else
+        return 0
     fi
 }
 
-echo_generate()
+generate_completion()
 {
-    echo "Generate bash completion: ${*}"
+    local -r NAME="${1}"
+    local -r COMMAND="${2}"
+
+
+    if check_bin "${NAME}"; then
+        echo "- ${NAME}"
+        ${COMMAND} > "${BASH_COMPLETION_DIR}/${NAME}"
+    else
+        log_warning "- ${1} not found"
+    fi
 }
 
 main()
@@ -36,37 +46,37 @@ main()
 
     rm -rf "${BASH_COMPLETION_DIR:?}"/*
 
-    echo_generate binenv
-    check_bin binenv
-    binenv completion bash > "${BASH_COMPLETION_DIR}/binenv"
+    echo "Generate bash completion:"
 
-    echo_generate helm
-    check_bin helm
-    helm completion bash > "${BASH_COMPLETION_DIR}/helm"
-
-    echo_generate kubectl
-    check_bin kubectl
-    kubectl completion bash > "${BASH_COMPLETION_DIR}/kubectl"
-
-    echo_generate kubectl krew
-    check_bin kubectl-krew
-    kubectl krew completion bash > "${BASH_COMPLETION_DIR}/kubectl-krew"
-
-    echo_generate npm
-    check_bin npm
-    npm completion > "${BASH_COMPLETION_DIR}/npm"
-
-    echo_generate pip
-    check_bin pip
-    pip completion --bash > "${BASH_COMPLETION_DIR}/pip"
-
-    echo_generate pip3
-    check_bin pip3
-    pip3 completion --bash > "${BASH_COMPLETION_DIR}/pip3"
-
-    echo_generate yq
-    check_bin yq
-    yq shell-completion bash > "${BASH_COMPLETION_DIR}/yq"
+    generate_completion "binenv" "binenv completion bash"
+    generate_completion "datree" "datree completion bash"
+    generate_completion "driftctl" "driftctl completion bash"
+    generate_completion "ghorg" "ghorg completion bash"
+    generate_completion "glab" "glab completion --shell bash"
+    generate_completion "grype" "grype completion bash"
+    generate_completion "helm" "helm completion bash"
+    generate_completion "hostctl" "hostctl completion bash"
+    generate_completion "hugo" "hugo completion bash"
+    generate_completion "infracost" "infracost completion --shell bash"
+    generate_completion "k3d" "k3d completion bash"
+    generate_completion "k6" "k6 completion bash"
+    generate_completion "krew" "krew completion bash"
+    generate_completion "kube-bench" "kube-bench completion bash"
+    generate_completion "kube-linter" "kube-linter completion bash"
+    generate_completion "kubeaudit" "kubeaudit completion bash"
+    generate_completion "kubecolor" "kubecolor completion bash"
+    generate_completion "kubectl" "kubectl completion bash"
+    generate_completion "kubescape" "kubescape completion bash"
+    generate_completion "kubestr" "kubestr completion bash"
+    generate_completion "npm" "npm completion"
+    generate_completion "pip" "pip completion --bash"
+    generate_completion "pip3" "pip3 completion --bash"
+    generate_completion "procs" "procs --completion-out bash"
+    generate_completion "syft" "syft completion bash"
+    generate_completion "telepresence" "telepresence completion bash"
+    generate_completion "terraform-docs" "terraform-docs completion bash"
+    generate_completion "updatecli" "updatecli completion bash"
+    generate_completion "yq" "yq shell-completion bash"
 }
 
 main
