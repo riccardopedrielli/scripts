@@ -80,13 +80,6 @@ install_github_deb()
     install_deb "${URL}"
 }
 
-install_binance()
-{
-    local -r URL="https://ftp.binance.com/electron-desktop/linux/production/binance-amd64-linux.deb"
-
-    install_deb "${URL}"
-}
-
 install_discord-ptb()
 {
     local -r URL="https://discord.com/api/download/ptb?platform=linux&format=deb"
@@ -183,7 +176,6 @@ main()
     sudo -v
 
     # Arguments  "package"          "from"    "github path"
-    install_app  "binance"          "url"     ""
     install_app  "discord-ptb"      "url"     ""
     install_app  "gitkraken"        "url"     ""
     install_app  "mongodb-compass"  "url"     ""
