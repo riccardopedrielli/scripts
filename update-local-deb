@@ -120,21 +120,6 @@ install_smartgit()
     install_deb "${URL}"
 }
 
-install_synology-drive()
-{
-    local -r VERSION=$(curl -fsSL https://www.synology.com/it-it/releaseNote/SynologyDriveClient | \
-                        grep -oE '[0-9]\.[0-9]\.[0-9]-[0-9]+' | \
-                        head -n 1)
-
-    local -r BUILD=$(echo "${VERSION}" | cut -d '-' -f 2)
-
-    local -r URL="https://global.download.synology.com/download/Utility/SynologyDriveClient/${VERSION}/Ubuntu/Installer/x86_64/synology-drive-client-${BUILD}.x86_64.deb"
-
-    install_deb "${URL}"
-
-    synology-drive autostart &> /dev/null
-}
-
 install_app()
 {
     local -r PACKAGE_NAME="${1}"
@@ -183,7 +168,6 @@ main()
     install_app  "powershell"       "github"  "PowerShell/PowerShell"
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
-    install_app  "synology-drive"   "url"     ""
 }
 
 main
