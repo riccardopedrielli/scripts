@@ -94,15 +94,6 @@ install_gitkraken()
     install_deb "${URL}"
 }
 
-install_mongodb-compass()
-{
-    local -r URL=$(curl -fsSL https://www.mongodb.com/try/download/compass | \
-                    grep -oE 'https://downloads.mongodb.com/compass/mongodb-compass_[0-9]\.[0-9]{1,2}\.[0-9]{1,2}_amd64\.deb' | \
-                    head -n 1)
-
-    install_deb "${URL}"
-}
-
 install_notable()
 {
     local -r URL="https://download.notable.app/?target=deb"
@@ -163,7 +154,6 @@ main()
     # Arguments  "package"          "from"    "github path"
     install_app  "discord-ptb"      "url"     ""
     install_app  "gitkraken"        "url"     ""
-    install_app  "mongodb-compass"  "url"     ""
     install_app  "notable"          "url"     ""
     install_app  "powershell"       "github"  "PowerShell/PowerShell"
     install_app  "smartgit"         "url"     ""
