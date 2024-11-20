@@ -10,8 +10,6 @@ readonly OPTION="${1:-}"
 
 # Settings
 readonly PACKAGES=(
-    "@vue/cli"
-    "@vue/cli-service"
     "diff-so-fancy"
     "dockerfilelint"
     "editorconfig"
@@ -21,12 +19,9 @@ readonly PACKAGES=(
     "nodemon"
     "npm"
     "npm-check-updates"
-    "pm2"
     "semver"
     "serve"
     "typescript"
-    "webpack"
-    "webpack-cli"
 )
 
 echo_info()
