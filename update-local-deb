@@ -80,9 +80,9 @@ install_github_deb()
     install_deb "${URL}"
 }
 
-install_discord-ptb()
+install_discord()
 {
-    local -r URL="https://discord.com/api/download/ptb?platform=linux&format=deb"
+    local -r URL="https://discord.com/api/download?platform=linux&format=deb"
 
     install_deb "${URL}"
 }
@@ -152,7 +152,7 @@ main()
     sudo -v
 
     # Arguments  "package"          "from"    "github path"
-    install_app  "discord-ptb"      "url"     ""
+    install_app  "discord"          "url"     ""
     install_app  "notable"          "url"     ""
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
