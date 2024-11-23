@@ -59,7 +59,7 @@ install_deb()
     local -r DEB_PATH="${TEMP_DIR}/package.deb"
 
     curl -fsSL "${URL}" -o "${DEB_PATH}"
-    sudo dpkg -i "${DEB_PATH}" > /dev/null
+    sudo apt install -y "${DEB_PATH}" > /dev/null
     rm -f "${DEB_PATH}"
 }
 
