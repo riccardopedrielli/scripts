@@ -152,6 +152,7 @@ main()
     install_app  "notable"          "url"     ""
     install_app  "smartgit"         "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
+    install_app  "fastfetch"        "github"  "fastfetch-cli/fastfetch"
 }
 
 main
