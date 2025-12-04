@@ -5,7 +5,7 @@ trap 'STATUS=${?}; echo "${0}: Error on line ${LINENO}: ${BASH_COMMAND}"; exit $
 trap 'rm -rf ${TEMP_DIR}' EXIT
 
 # Settings
-readonly TEMP_DIR="/tmp/$(basename "${0}")"
+readonly TEMP_DIR="/tmp/update-local-deb"
 readonly ARCH="amd64"
 readonly DEB_EXCLUDE_LIST="lts"
 readonly DEBIAN_FRONTEND="noninteractive"
@@ -76,37 +76,6 @@ install_github_deb()
     install_deb "${URL}"
 }
 
-install_discord()
-{
-    local -r URL="https://discord.com/api/download?platform=linux&format=deb"
-
-    install_deb "${URL}"
-}
-
-install_gitkraken()
-{
-    local -r URL="https://release.axocdn.com/linux/gitkraken-amd64.deb"
-
-    install_deb "${URL}"
-}
-
-install_notable()
-{
-    local -r URL="https://download.notable.app/?target=deb"
-
-    install_deb "${URL}"
-}
-
-install_smartgit()
-{
-    local -r URL_PATH="$(curl -fsSL https://www.syntevo.com/smartgit/download/ | \
-                            grep -oE '/downloads/smartgit/smartgit-[0-9]{2}_[0-9]{1,2}_[0-9]{1,2}\.deb')"
-
-    local -r URL="https://www.syntevo.com/${URL_PATH}"
-
-    install_deb "${URL}"
-}
-
 install_app()
 {
     local -r PACKAGE_NAME="${1}"
@@ -133,6 +102,13 @@ install_app()
     echo
 }
 
+install_gitkraken()
+{
+    local -r URL="https://api.gitkraken.dev/releases/production/linux/x64/active/gitkraken-amd64.deb"
+
+    install_deb "${URL}"
+}
+
 main()
 {
     check_bin curl
@@ -148,11 +124,8 @@ main()
     sudo -v
 
     # Arguments  "package"          "from"    "github path"
-    install_app  "discord"          "url"     ""
-    install_app  "notable"          "url"     ""
-    install_app  "smartgit"         "url"     ""
+    install_app  "gitkraken"        "url"     ""
     install_app  "syft"             "github"  "anchore/syft"
-    install_app  "fastfetch"        "github"  "fastfetch-cli/fastfetch"
 }
 
 main
